@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% import 'base_newick_tools.html' as nwt %}
+
+{% block title %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block menu %}
+{{ super() }}
+{% endblock %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<form id="newickForm" method="post" enctype="multipart/form-data" class="form-contact">
+    <div class="gap-2 d-flex flex-row justify-content-start h-50 w-100 text-center">
+        <div class="d-flex gap-2 flex-column justify-content-end w-50 h-75 mx-3">
+            <label for="textName">please provide the name</label>
+            <input spellcheck="false" id="textName" name="textName" type="text" class="form-control rounded-pill"
+                   onchange="checkName()"/>
+        </div>
+        <div class="d-flex gap-2 flex-column justify-content-end w-25 h-75 mx-3">
+            <input id="theButton" name="checkButton" type="button" class="mt-5 form-control btn btn-light rounded-pill"
+                   value="check for letter a in name" onclick="checkName()"/>
+        </div>
+        <div class="d-flex gap-2 flex-column justify-content-end w-25 h-75 m-3 ms-5">
+            <div id="result" class="container">
+                {{nwt.alerts(20)}}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+{% block messages %}
+{{ super() }}
+{% endblock %}

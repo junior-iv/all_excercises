@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% import 'base_newick_tools.html' as nwt %}
+
+{% block title %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block menu %}
+{{ super() }}
+{% endblock %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<form id="lgForm" method="post" enctype="multipart/form-data" class="form-contact">
+    <div class="gap-2 d-flex flex-row justify-content-center h-50 w-100 text-center">
+        <div class="container gap-2 d-flex flex-column h-75 w-100 mx-3">
+            <label for="glCoefficient">please provide gain-loss coefficient</label>
+            <input value="{{gl_coefficient}}" id="glCoefficient" name="glCoefficient" type="number" min="0.01"
+                   onchange="getOneParameterQMatrix()" max="1" step="0.01" class="form-control rounded-pill"/>
+            <input id="theButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill my-1"
+                   value="implements a one parameter gain-loss Q matrix" onclick="getOneParameterQMatrix()"/>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-row text-center w-100 justify-content-center">
+        <div id="result" class="h-100 w-100">
+        </div>
+    </div>
+</form>
+{% endblock %}
+{% block messages %}
+{{ super() }}
+{% endblock %}

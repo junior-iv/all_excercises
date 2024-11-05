@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% import 'base_newick_tools.html' as nwt %}
+
+{% block title %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block menu %}
+{{ super() }}
+{% endblock %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<form id="lgForm" method="post" enctype="multipart/form-data" class="form-contact">
+    <div class="gap-2 d-flex flex-row justify-content-start h-50 w-100 text-center">
+        <div class="container gap-2 d-flex flex-column h-75 w-50 mx-3">
+            <label for="textArea" class="my-5">paste the LG into a text field or upload LG from file</label>
+            <div class="gap-2 d-flex flex-row w-100">
+                <div class="w-80">
+                    <input id="newickFile" name="newickFile" type="file" accept=".txt"
+                           class="form-control rounded-pill" onchange="uploadFile()"/>
+                </div>
+                <div class="gap-2 d-flex flex-row w-50 form-check form-switch">
+                    <div class="gap-2 d-flex flex-column w-5 container justify-content-end form-check form-switch">
+                      <input class="form-check-input bg-secondary-subtle rounded-pill" type="checkbox" role="switch" id="flexSwitchProcessFileOnServer" checked>
+                    </div>
+                    <div class="gap-2 d-flex flex-column w-100 container justify-content-end form-check form-switch">
+                      <label class="form-check-label" for="flexSwitchProcessFileOnServer">process file on server</label>
+                    </div>
+                </div>
+            </div>
+            <div class="gap-2 d-flex h-auto my-3 justify-content-end">
+                <input id="theButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill"
+                       value="the LG into a Q matrix" onclick="lgToQMatrix()"/>
+            </div>
+        </div>
+        <div class="container gap-2 d-flex flex-column h-75 w-50 m-3">
+            <textarea spellcheck="false" placeholder="paste the LG here" id="textArea" name="textArea" autocomplete="on"
+                      rows="10" class="form-control-sm h6 h-75">{{content_textarea}}</textarea>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-row text-center w-100 justify-content-center">
+        <div id="result" class="h-100 w-100">
+        </div>
+    </div>
+</form>
+{% endblock %}
+{% block messages %}
+{{ super() }}
+{% endblock %}

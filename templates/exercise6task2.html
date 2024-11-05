@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import 'base_newick_tools.html' as nwt %}
+
+{% block title %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block menu %}
+{{ super() }}
+{% endblock %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<form id="lgForm" method="post" enctype="multipart/form-data" class="form-contact">
+    <div class="gap-2 d-flex flex-row justify-content-start h-50 w-100 text-center">
+        <div class="container gap-2 d-flex flex-column h-75 w-50 mx-3">
+            <label for="glCoefficient">please provide gain-loss coefficient</label>
+            <input value="{{gl_coefficient}}" id="glCoefficient" name="glCoefficient" type="number" min="0.01"
+                   max="100" step="0.01" class="form-control rounded-pill"/>
+            <label for="branchLength">please provide length of the branch</label>
+            <input value="{{branch_length}}" id="branchLength" name="branchLength" type="number"
+                   min="0.01" max="100" step="0.01" class="form-control rounded-pill"/>
+            <label for="simulationsCount">please provide count of the simulations</label>
+            <input value="{{simulations_count}}" id="simulationsCount" name="simulationsCount" type="number"
+                   min="1" max="1000000" step="1" class="form-control rounded-pill"/>
+            <div class="gap-2 d-flex h-auto">
+                <input id="theButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill mt-1"
+                       value="simulate a single site along a branch with a one parameter gain-loss Q matrix" onclick="simulateSingleSiteAlongBranchWithOneParameterMatrix()"/>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-column text-end w-50 justify-content-start mx-3 my-5">
+            <div id="result" class="container gap-2 d-flex h-50">
+                {{nwt.loaderGrow()}}
+                {{nwt.loaderCube()}}
+                {{nwt.loaderSpinner()}}
+                {{nwt.alerts()}}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+{% block messages %}
+{{ super() }}
+{% endblock %}

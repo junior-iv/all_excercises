@@ -1,0 +1,182 @@
+
+<!--{%- macro loaderWawe() -%}-->
+<!--<div id="loaderWawe" class="hidden d-flex gap-2">-->
+<!--<div id="loader" class="loader">-->
+<!--    <div class="wave"></div>-->
+<!--    <div class="wave"></div>-->
+<!--    <div class="wave"></div>-->
+<!--</div>-->
+<!--</div>-->
+<!--{%- endmacro -%}-->
+
+<!--{%- macro treeCanvas() -%}-->
+<!--<div id="controls">-->
+<!--    <input style="visibility: hidden" type="range" id="complexity" min="1" max="12" value="1"/>-->
+<!--</div>-->
+<!--<canvas id="treeCanvas" width="800" height="500"></canvas>-->
+<!--{%- endmacro -%}-->
+
+<!--{%- macro loaderRound() -%}-->
+<!--<div id="loaderRound" style="position: absolute" class="hidden d-flex gap-2">-->
+<!--<svg id="svgRound" height="480" width="800">-->
+<!--    <circle r="230" cx="240" cy="240" fill="url(#gradient)" filter="blur(0.5em)" opacity="0.5"/>-->
+<!--    Sorry, your browser does not support inline SVG.-->
+<!--</svg>-->
+<!--</div>-->
+<!--{%- endmacro -%}-->
+
+{%- macro svg() -%}
+<svg height="70" width="120">
+    <defs>
+        <linearGradient gradientTransform="rotate(90)" id="gradient">
+            <stop offset="5%" stop-color="white">
+                <animate id="animation5" begin="0s; animation8.end" attributeName="stop-color" from="#fff" to="#dff" dur="5"/>
+                <animate id="animation6" begin="animation5.end" attributeName="stop-color" from="#dff" to="#fff" dur="5"/>
+                <animate id="animation7" begin="animation6.end" attributeName="stop-color" from="#fff" to="#f99" dur="5"/>
+                <animate id="animation8" begin="animation7.end" attributeName="stop-color" from="#f99" to="#fff" dur="5"/>
+            </stop>
+            <stop offset="30%" stop-color="#fd0">
+                <animate id="animation9" begin="0s; animation12.end" attributeName="stop-color" from="#fd0" to="#FFD700" dur="10"/>
+                <animate id="animation10" begin="animation9.end" attributeName="stop-color" from="#FFD700" to="#fd0" dur="10"/>
+                <animate id="animation11" begin="animation10.end" attributeName="stop-color" from="#fd0" to="#dff" dur="10"/>
+                <animate id="animation12" begin="animation11.end" attributeName="stop-color" from="#dff" to="#fd0" dur="10"/>
+            </stop>
+            <stop offset="50%" stop-color="#fff">
+                <animate id="animation1" begin="0s; animation4.end" attributeName="stop-color" from="#fff" to="#dff" dur="15"/>
+                <animate id="animation2" begin="animation1.end" attributeName="stop-color" from="#dff" to="#fff" dur="15"/>
+                <animate id="animation3" begin="animation2.end" attributeName="stop-color" from="#fff" to="#f99" dur="15"/>
+                <animate id="animation4" begin="animation3.end" attributeName="stop-color" from="#f99" to="#fff" dur="15"/>
+            </stop>
+            <stop offset="60%" stop-color="#dff">
+                <animate id="animation13" begin="0s; animation16.end" attributeName="stop-color" from="#dff" to="MediumSpringGreen" dur="15"/>
+                <animate id="animation14" begin="animation13.end" attributeName="stop-color" from="MediumSpringGreen" to="#DarkCyan" dur="15"/>
+                <animate id="animation15" begin="animation14.end" attributeName="stop-color" from="#DarkCyan" to="#ffd" dur="15"/>
+                <animate id="animation16" begin="animation15.end" attributeName="stop-color" from="#ffd" to="#dff" dur="15"/>
+            </stop>
+            <stop offset="80%" stop-color="navy">
+                <animate id="animation21" begin="0s; animation24.end" attributeName="stop-color" from="navy" to="#dff" dur="10"/>
+                <animate id="animation22" begin="animation21.end" attributeName="stop-color" from="#dff" to="FFD700" dur="15"/>
+                <animate id="animation23" begin="animation22.end" attributeName="stop-color" from="FFD700" to="#f99" dur="20"/>
+                <animate id="animation24" begin="animation23.end" attributeName="stop-color" from="#f99" to="navy" dur="10"/>
+            </stop>
+            <stop offset="100%" stop-color="black">
+                <animate id="animation17" begin="0s; animation20.end" attributeName="stop-color" from="Indigo" to="#dff" dur="20"/>
+                <animate id="animation18" begin="animation17.end" attributeName="stop-color" from="#dff" to="#aff" dur="20"/>
+                <animate id="animation19" begin="animation18.end" attributeName="stop-color" from="#aff" to="#FFD700" dur="20"/>
+                <animate id="animation20" begin="animation19.end" attributeName="stop-color" from="#FFD700" to="Indigo" dur="20"/>
+            </stop>
+        </linearGradient>
+    </defs>
+    <ellipse cx="50" cy="35" rx="45" ry="30" fill="url(#gradient)"/>
+    <text fill="#fff" font-size="18" font-family="Verdana" x="20" y="35">newick</text>
+    Sorry, your browser does not support inline SVG.
+</svg>
+{%- endmacro -%}
+
+
+
+{%- macro newick_tool(content_textarea='', data_name='newick tree', accept='.tree,.treefile,.txt') -%}
+            <label for="textArea">paste the {{data_name}} into a text field or upload {{data_name}} from file</label>
+            <div class="gap-2 d-flex flex-row w-100">
+                <div class="w-80">
+                    <input id="newickFile" name="newickFile" type="file" accept="{{accept}}"
+                           class="form-control rounded-pill" onchange="uploadFile()"/>
+                </div>
+                <div class="gap-2 d-flex flex-row w-50 form-check form-switch">
+                    <div class="gap-2 d-flex flex-column w-5 container justify-content-end form-check form-switch">
+                      <input class="form-check-input bg-secondary-subtle rounded-pill" type="checkbox" role="switch" id="flexSwitchProcessFileOnServer" checked>
+                    </div>
+                    <div class="gap-2 d-flex flex-column w-100 container justify-content-end form-check form-switch">
+                      <label class="form-check-label" for="flexSwitchProcessFileOnServer">process file on server</label>
+                    </div>
+                </div>
+            </div>
+            <textarea spellcheck="false" placeholder="paste the {{data_name}} here" id="textArea" name="textArea" autocomplete="on"
+                      rows="16" class="form-control-sm h-75">{{content_textarea}}</textarea>
+{%- endmacro -%}
+
+{%- macro tree_html() -%}
+    <div class="mx-3 mt-3 mb-1 gap-2 d-flex h-auto">
+        <input id="printButton" name="printButton" type="button" class="form-control btn btn-light rounded-pill"
+               value="draw a tree" onclick="printTree()"/>
+    </div>
+    <div class="mx-3 gap-2 d-flex h-auto">
+        <input id="openButton" name="printButton" type="button" class="form-control btn btn-light rounded-pill"
+               value="draw and open a tree" onclick="printTree('open')"/>
+    </div>
+    <div id="result" class="m-6 text-end gap-2 d-flex h-75">
+        {{content_result}}
+    </div>
+{%- endmacro -%}
+
+{%- macro alerts(width=45) -%}
+<div id="divInfo" style="visibility: hidden; position: absolute"
+     class="alert-dismissible w-{{width}} d-flex gap-2 flex-column justify-content-center alert alert-info text-break text-start">
+</div>
+<div id="divDanger" style="visibility: hidden; position: absolute"
+     class="alert-dismissible w-{{width}} d-flex gap-2 flex-column justify-content-center alert alert-danger text-break text-start">
+</div>
+<div id="divWarning" style="visibility: hidden; position: absolute"
+     class="alert-dismissible w-{{width}} d-flex gap-2 flex-column justify-content-center alert alert-warning text-break text-start">
+</div>
+<div id="divSuccess" style="visibility: hidden; position: absolute"
+     class="alert-dismissible w-{{width}} d-flex gap-2 flex-column justify-content-center alert alert-success text-break text-start">
+</div>
+<div id="divSecondary" style="visibility: hidden; position: absolute"
+     class="alert-dismissible w-{{width}} d-flex gap-2 flex-column justify-content-center alert alert-secondary text-break text-start">
+</div>
+{%- endmacro -%}
+
+{%- macro robinson_folds_distance(content_textarea=[]) -%}
+<label for="newickText1">paste the newick tree into a text fields</label>
+<div class="container gap-2 d-flex flex-row">
+<textarea spellcheck="false" placeholder="paste the newick tree here" id="newickText1" name="newickText" autocomplete="on"
+          rows="2" class="form-control h-15">{{content_textarea[0]}}</textarea>
+<textarea spellcheck="false" placeholder="paste the newick tree here" id="newickText2" name="newickText" autocomplete="on"
+          rows="2" class="form-control h-15">{{content_textarea[1]}}</textarea>
+</div>
+{%- endmacro -%}
+
+{%- macro loaderSquare() -%}
+<div id="loaderSquare" class="loaderSquare m-9 invisible d-flex gap-2">
+    <div class="square1 square"></div>
+    <div class="square2 square"></div>
+    <div class="square3 square"></div>
+    <div class="square4 square"></div>
+</div>
+{%- endmacro -%}
+
+{%- macro loaderPoint() -%}
+<div id="loaderPoint" class="spinner-border m-9 invisible d-flex gap-2">
+</div>
+{%- endmacro -%}
+
+{%- macro loaderGrow() -%}
+<div id="loaderGrow" class="spinner-grow m-9 invisible d-flex gap-2">
+</div>
+{%- endmacro -%}
+
+{%- macro loaderSpinner() -%}
+    <div id="loaderSpinner" class="loaderSpinner m-9 invisible d-flex gap-2"></div>
+{%- endmacro -%}
+
+{%- macro loaderCube() -%}
+<div id="loaderCube" class="loaderCube m-9 invisible d-flex gap-2">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+{%- endmacro -%}
+
+{%- macro dna_sequences_simulation(dna_length, branch_length, repetition_count) -%}
+    <label for="dnaLength">please provide length of the DNA sequence</label>
+    <input value="{{dna_length}}" id="dnaLength" name="dnaLength" type="number"
+           min="4" max="100000" step="1" class="form-control rounded-pill"/>
+    <label for="branchLength">please provide length of the branch</label>
+    <input value="{{branch_length}}" id="branchLength" name="branchLength" type="number"
+           min="0.01" max="100" step="0.01" class="form-control rounded-pill"/>
+    <label for="repetitionCount">please provide count of the repetition</label>
+    <input value="{{repetition_count}}" id="repetitionCount" name="repetitionCount" type="number"
+           min="1" max="1000000" step="1" class="form-control rounded-pill"/>
+{%- endmacro -%}

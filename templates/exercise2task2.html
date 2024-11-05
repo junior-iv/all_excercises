@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import 'base_newick_tools.html' as nwt %}
+
+{% block title %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block menu %}
+{{ super() }}
+{% endblock %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<form id="newickForm" method="post" enctype="multipart/form-data" class="form-contact">
+    <div class="gap-2 d-flex flex-row justify-content-start h-50 w-100 text-center">
+        <div class="container gap-2 d-flex flex-column h-75 w-50 mx-3">
+            {{nwt.newick_tool(content_textarea)}}
+            <label for="distanceToFather">please provide how many units to add to each tree branch</label>
+            <input value="{{distance_to_father}}" id="distanceToFather" name="distanceToFather" type="number"
+                   min="-10.000000000000" max="10.000000000000" step="0.000000000001" class="form-control rounded-pill"/>
+            <div class="gap-2 d-flex h-auto">
+                <input id="theButton" name="changeButton" type="button" class="form-control btn btn-light rounded-pill"
+                       value="add units to all branches" onclick="changeTree()"/>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-column w-50 justify-content-start m-3">
+            {{nwt.tree_html()}}
+            <div id="result" class="m-6  justify-content-end gap-2 d-flex h-75">
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+{% block messages %}
+{{ super() }}
+{% endblock %}
