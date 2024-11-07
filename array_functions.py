@@ -60,7 +60,7 @@ def get_one_parameter_qmatrix(p1: Optional[float], p0: Optional[float]) -> np.nd
     return qmatrix
 
 
-def lq_to_qmatrix(lg: str) -> Tuple[np.ndarray, np.ndarray]:
+def lq_to_qmatrix(lg: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     qmatrix = np.zeros((20, 20), dtype='float32')
     lg_list = lg.split('\n')
     amino_acids_frequencies = np.array(1)
@@ -81,8 +81,12 @@ def lq_to_qmatrix(lg: str) -> Tuple[np.ndarray, np.ndarray]:
     for i in list(range(20)):
         for j in list(range(20)):
             qmatrix[i][j] = - qmatrix[i][j] / divisor
+    replacement_frequencies = np.array([[0.0 if x == i else np.round((- qmatrix[i][x]) * 1 / qmatrix[i][i], 9)
+                                        for x in range(20)] for i in range(20)])
+    replacement_frequencies = np.array([[0.0 if x == i else replacement_frequencies[i][x] + (1 -
+                                       sum(replacement_frequencies[i])) / 19 for x in range(20)] for i in range(20)])
 
-    return qmatrix, amino_acids_frequencies
+    return qmatrix, amino_acids_frequencies, replacement_frequencies
 
 
 def get_min(data_array: np.ndarray) -> float:

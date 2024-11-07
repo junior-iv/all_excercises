@@ -288,11 +288,13 @@ function simulateAminoAcidReplacementsAlongTree() {
 function simulateAminoAcidReplacementsByLG() {
     const textArea = document.getElementById('textArea');
     const aaLength = document.getElementById('aaLength');
+    const aminoAcid = document.getElementById('aminoAcid');
     const branchLength = document.getElementById('branchLength');
     const simulationsCount = document.getElementById('simulationsCount');
     const formData = new FormData();
     formData.append('textArea', textArea.value);
     formData.append('aaLength', aaLength.value);
+    formData.append('aminoAcid', aminoAcid.value);
     formData.append('branchLength', branchLength.value);
     formData.append('simulationsCount', simulationsCount.value);
 
