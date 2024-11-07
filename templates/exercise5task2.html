@@ -33,8 +33,14 @@
             <label for="simulationsCount">please provide count of the simulations</label>
             <input value="{{simulations_count}}" id="simulationsCount" name="simulationsCount" type="number"
                    min="1" max="1000000" step="1" class="form-control rounded-pill"/>
-            <div class="gap-2 d-flex h-auto">
-                <input id="theButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill"
+            <div class="gap-2 d-flex h-auto mt-1">
+<!--                <label for="aminoAcid">please choose of amino acid</label>-->
+                <input id="aminoAcid" name="aminoAcid" list="listAminoAcid" class="form-control rounded-pill w-50"
+                placeholder="please choose the starting amino acid"/>
+                <datalist id="listAminoAcid">
+                   {{ content_amino_acids|safe }}
+                </datalist>
+                <input id="theButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill w-50"
                        value="simulate amino acid replacements using the LG matrix" onclick="simulateAminoAcidReplacementsByLG()"/>
             </div>
         </div>

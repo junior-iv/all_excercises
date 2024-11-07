@@ -96,6 +96,7 @@ AMINO_ACIDS = (('A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M',
                ('Ala', 'Arg', 'Asn', 'Asp', 'Cys', 'Gln', 'Glu', 'Gly', 'His', 'Ile', 'Leu', 'Lys', 'Met', 'Phe', 'Pro',
                 'Ser', 'Thr', 'Trp', 'Tyr', 'Val'))
 DNA = ('A', 'C', 'G', 'T')
+CONTENT_AMINO_ACIDS = ''.join([f'<option value = "{i}" > {i} </option>\n' for i in AMINO_ACIDS[1]])
 
 
 @app.route('/')
@@ -223,6 +224,7 @@ def exercise5task1():
 def exercise5task2():
     return render_template('exercise5task2.html', content_textarea=CONTENT_TEXTAREA[2],
                            simulations_count=SIMULATIONS_COUNT[1], branch_length=BRANCH_LENGTH, aa_length=AA_LENGTH[0],
+                           content_amino_acids=CONTENT_AMINO_ACIDS,
                            title=(' - Exercise #5 simulating with the LG matrix:', ' simulator of the amino acid '
                                   'replacements using the LG matrix (Task #2)'), menu=MENU)
 
@@ -355,11 +357,12 @@ def simulate_amino_acid_replacements_by_lg():
     if request.method == 'POST':
         lg_text = request.form.get('textArea')
         aa_length = int(request.form.get('aaLength'))
+        starting_amino_acid = request.form.get('aminoAcid')
         branch_length = float(request.form.get('branchLength'))
         simulations_count = int(request.form.get('simulationsCount'))
 
         statistics = sf.simulate_amino_acid_replacements_by_lg(af.lq_to_qmatrix(lg_text), branch_length,
-                                                               simulations_count, aa_length)
+                                                               simulations_count, aa_length, starting_amino_acid)
         result = df.result_design(statistics)
 
         return jsonify(message=result)

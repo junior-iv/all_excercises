@@ -15,7 +15,7 @@ from main import RESULT_DATA_PATH as RESULT_DATA_PATH
 from main import AMINO_ACIDS as AMINO_ACIDS
 from main import DNA as DNA
 
-AMINO_ACIDS = AMINO_ACIDS[0]
+# AMINO_ACIDS = AMINO_ACIDS[0]
 
 
 def convert_seconds(seconds: float) -> str:
@@ -26,13 +26,18 @@ def get_sequences_differentce(dna1: str, dna2: str) -> float:
     return sum(a != b for a, b in zip(dna1, dna2)) / len(dna1)
 
 
-def get_random_sequence(dna_length: Union[int, str, None] = 1) -> str:
-    return ''.join(rnd.choice(DNA, int(dna_length)))
+def get_random_sequence(dna_length: Union[int, str, None] = 1, exclusion_index: Optional[int] = None) -> str:
+    dna = DNA if exclusion_index is None else DNA[:exclusion_index] + DNA[:exclusion_index + 1]
+    return ''.join(rnd.choice(dna, int(dna_length)))
 
 
-def get_random_amino_acid_structure(aa_length: Union[int, str, None] = 1,
-                                    aa_frequencies: Optional[np.ndarray] = None) -> str:
-    return ''.join(rnd.choice(AMINO_ACIDS, int(aa_length), True, aa_frequencies))
+def get_random_amino_acid_sequence(aa_length: Union[int, str, None] = 1, aa_frequencies: Optional[np.ndarray] = None,
+                                   exclusion_index: Optional[int] = None) -> str:
+    amino_acids = AMINO_ACIDS[0]
+    if exclusion_index is not None:
+        amino_acids = AMINO_ACIDS[0][:exclusion_index] + AMINO_ACIDS[0][:exclusion_index + 1]
+        aa_frequencies = aa_frequencies[:exclusion_index] + aa_frequencies[exclusion_index + 1:]
+    return ''.join(rnd.choice(amino_acids, int(aa_length), True, aa_frequencies))
 
 
 def get_jukes_cantor_probabilities(branch_length) -> Tuple[float, float]:
@@ -166,46 +171,48 @@ def simulate_indel_events(dna_length: int = 4, events_count: int = 1, low: int =
 
 
 def get_replacement(current_time: float, branch_length: float, qmatrix: np.ndarray, amino_acids_frequencies: np.ndarray,
-                    acid: str, aa_index: int, is_replacement: bool) -> Tuple[str, str, int]:
+                    acid: str, aa_index: int) -> Tuple[float, int, str, str]:
     j = m = acid
     lambda_param = -qmatrix[aa_index][aa_index]
     counter = 0
     while True:
         current_time += rnd.exponential(lambda_param)
         if current_time <= branch_length:
-            j = get_random_amino_acid_structure(1, amino_acids_frequencies)
+            j = get_random_amino_acid_sequence(1, amino_acids_frequencies, )
             counter += 1 if j != m else 0
         else:
             break
-    return m, j, counter if is_replacement else int(j == m)
+    return get_sequences_differentce(m, j), counter, m, j
 
 
-def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np.ndarray], branch_length: float,
-                                             simulations_count: int = 100000, aa_length: int = 1, node_name: str =
-                                             '') -> Dict[str, str]:
-    qmatrix, amino_acids_frequencies = probabilities
-    replacement_statistic_1 = []
-    replacement_statistic_2 = []
+def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np.ndarray, np.ndarray],
+                                             branch_length: float, simulations_count: int = 100000, aa_length: int = 1,
+                                             node_name: str = '', starting_amino_acid: Optional[Union[str, int]] =
+                                             None) -> Dict[str, str]:
+    qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
+    replacement_statistic = []
     node_name = f'_{node_name}' if node_name else ''
+    amino_acid_sequence = ''
 
     for _ in range(simulations_count):
-        amino_acid = get_random_amino_acid_structure(aa_length, amino_acids_frequencies)
+        if starting_amino_acid is None or (isinstance(starting_amino_acid, str) and not starting_amino_acid):
+            amino_acid_sequence = get_random_amino_acid_sequence(aa_length, amino_acids_frequencies)
+        elif isinstance(starting_amino_acid, str) and starting_amino_acid:
+            amino_acid_sequence = AMINO_ACIDS[0][AMINO_ACIDS[1].index(starting_amino_acid)] * aa_length
+        elif isinstance(starting_amino_acid, int):
+            amino_acid_sequence = AMINO_ACIDS[0][starting_amino_acid] * aa_length
         for i in range(aa_length):
-            aa_index = AMINO_ACIDS.index(amino_acid[i])
-            replacement_frequencies = np.array([np.float32(0.0000001) if x == aa_index else
-                                                np.round(- qmatrix[aa_index][x] * 1 / qmatrix[aa_index][aa_index], 7)
-                                                for x in range(20)])
-            replacement_statistic_1.append(get_replacement(0, branch_length, qmatrix, replacement_frequencies,
-                                                           amino_acid[i], aa_index, True))
+            aa_index = AMINO_ACIDS[0].index(amino_acid_sequence[i])
+            replacement_statistic.append(get_replacement(0, branch_length, qmatrix, replacement_frequencies[aa_index],
+                                                         amino_acid_sequence[i], aa_index))
 
-        replacement_statistic_2.append(
-            get_replacement(0, branch_length, qmatrix, amino_acids_frequencies, AMINO_ACIDS, 0, False))
-
-    replacement_mean = sum([x[2] for x in replacement_statistic_1]) / len(replacement_statistic_1)
-    replacement_probabilities = sum([x[2] for x in replacement_statistic_2]) / len(replacement_statistic_2)
+    replacement_mean = sum([x[1] for x in replacement_statistic]) / len(replacement_statistic)
+    replacement_probabilities = sum([x[0] for x in replacement_statistic]) / len(replacement_statistic)
+    no_change_probabilities = sum([1 - x[0] for x in replacement_statistic]) / len(replacement_statistic)
 
     return {f'replacement_mean{node_name}': f'{replacement_mean:.5f}',
-            f'replacement_probabilities{node_name}': f'{replacement_probabilities:.5f}'}
+            f'replacement_probabilities{node_name}': f'{replacement_probabilities:.5f}',
+            f'no_change_probabilities{node_name}': f'{no_change_probabilities:.5f}'}
 
 
 def simulate_single_site_along_branch_with_one_parameter_matrix(branch_length: float, gl_coefficient: float,
@@ -255,12 +262,12 @@ def simulate_amino_acid_replacements_along_tree(lg_text: str, newick_text: str, 
     return result
 
 
-def simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np.ndarray], branch_length: float,
-                                           simulations_count: int = 100000, aa_length: int = 10) -> Dict[str, str]:
+def simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np.ndarray, np.ndarray], branch_length:
+                                           float, simulations_count: int = 100000, aa_length: int = 10,
+                                           starting_amino_acid: Optional[Union[str, int]] = None) -> Dict[str, str]:
     start_time = time()
-
     simulations_result = __simulate_amino_acid_replacements_by_lg(probabilities, branch_length, simulations_count,
-                                                                  aa_length)
+                                                                  aa_length, '', starting_amino_acid)
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update(simulations_result)
 
@@ -386,10 +393,10 @@ def get_zipf(alpha: float, simulations_count: int = 100000,
             'result': probabilities_result}
 
 
-def get_html_table_heade(heade: Tuple[str, str, str]) -> str:
+def get_html_table_head(head: Tuple[str, str, str]) -> str:
     str_result = '<table id="sequencesResultTable" class="m-3 w-75 table-bordered table-danger bg-light">\n'
     style = "'text-center bg-dark bg-opacity-10'"
-    str_result += f'<tr>{"".join([f"<th class={style}>{i}</th>" for i in heade])}</tr>\n'
+    str_result += f'<tr>{"".join([f"<th class={style}>{i}</th>" for i in head])}</tr>\n'
 
     return str_result
 
@@ -413,8 +420,8 @@ def get_html_table(data_array: List[Tuple[Union[float, int, str], ...]], str_tab
 
 
 def get_html_table_file_name(data_array: List[Tuple[Union[float, int, str], ...]],
-                             heade: Tuple[str, str, str], variant: int = 1) -> str:
-    str_table = get_html_table(data_array, get_html_table_heade(heade), variant)
+                             head: Tuple[str, str, str], variant: int = 1) -> str:
+    str_table = get_html_table(data_array, get_html_table_head(head), variant)
     while True:
         name = f'{random.randrange(1000000 * variant, 1000000 * variant + 999999)}'
         file_name = f'{RESULT_DATA_PATH}/{name}.txt'
