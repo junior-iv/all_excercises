@@ -229,7 +229,7 @@ function lgToQMatrix() {
         });
 }
 
-function calculateParametersP() {
+function calculatePijMatrix() {
     const parameterName = document.getElementById('parameterName');
     const glCoefficient = document.getElementById('glCoefficient');
     const parametersP = [document.getElementById('P00').value, document.getElementById('P01').value,
@@ -242,7 +242,7 @@ function calculateParametersP() {
     const loaderID = getLoader();
     setVisibilityLoader(true, loaderID);
 
-    fetch('/calculateParametersP', {
+    fetch('/calculate_pij_matrix', {
         method: 'POST',
         body: formData
     })

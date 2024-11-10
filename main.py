@@ -333,8 +333,8 @@ def change_dna_length():
         return jsonify(message=result)
 
 
-@app.route('/calculateParametersP', methods=['POST'])
-def calculateParametersP():
+@app.route('/calculate_pij_matrix', methods=['POST'])
+def calculate_pij_matrix():
     if request.method == 'POST':
         gl_coefficient = float(request.form.get('glCoefficient'))
         parameters_p = tuple(map(float, request.form.get('parametersP').split(',')))
@@ -342,7 +342,7 @@ def calculateParametersP():
         parameter_name = bool(int(request.form.get('parameterName')))
         parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
 
-        statistics = sf.calculateParametersP(parameters, parameters_p)
+        statistics = sf.calculate_pij_matrix(parameters, parameters_p)
         result = df.result_design(statistics)
 
         return jsonify(message=result)

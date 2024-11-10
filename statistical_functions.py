@@ -215,7 +215,7 @@ def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np
             f'no_change_probabilities{node_name}': f'{no_change_probabilities:.5f}'}
 
 
-def calculateParametersP(gl_coefficient: Tuple[Optional[float], None], parameters_p: Tuple[float, ...]) -> Dict[str, Union[str, float, int]]:
+def calculate_pij_matrix(gl_coefficient: Tuple[Optional[float], None], parameters_p: Tuple[float, ...]) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
     pij_matrix = af.get_pij_matrix(qmatrix, parameters_p)
