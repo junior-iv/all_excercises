@@ -48,7 +48,20 @@ def get_html_table(data_array: List[List[Union[None, str, int, float]]]) -> str:
     return str_result
 
 
-def get_one_parameter_qmatrix(p1: Optional[float], p0: Optional[float]) -> np.ndarray:
+def get_pij_matrix(qmatrix: np.ndarray, p_time: Tuple[float, ...]) -> np.ndarray:
+    pij_matrix = np.zeros((2, 2), dtype='float64')
+    gain = qmatrix[0][1]
+    loss = qmatrix[1][0]
+    gl = gain + loss
+    pij_matrix[0, 0] = loss / gl + np.exp(-gl * p_time[0]) * gain / gl
+    pij_matrix[0, 1] = gain / gl * (1 - np.exp(-gl * p_time[1]))
+    pij_matrix[1, 0] = loss / gl * (1 - np.exp(-gl * p_time[2]))
+    pij_matrix[1, 1] = gain / gl + np.exp(-gl * p_time[3]) * loss / gl
+
+    return pij_matrix
+
+
+def get_one_parameter_qmatrix(p0: Optional[float], p1: Optional[float]) -> np.ndarray:
     qmatrix = np.zeros((2, 2), dtype='float32')
     p1 = p1 if p1 else 1 - p0
 

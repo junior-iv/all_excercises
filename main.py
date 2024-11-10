@@ -35,9 +35,8 @@ MENU = ({'name': 'Home page', 'url': 'index',
                      {'name': 'Task #3', 'url': 'exercise5task3'})
          },
         {'name': 'Exercise #6', 'url': '',
-         'submenu': ({'name': 'Task #1', 'url': 'exercise6task1'}, {'name': 'Task #2', 'url': 'exercise6task2'}
-                     # ,
-                     # {'name': 'Task #3', 'url': 'exercise6task3'}
+         'submenu': ({'name': 'Task #1', 'url': 'exercise6task1'}, {'name': 'Task #2', 'url': 'exercise6task2'},
+                     {'name': 'Task #4, #5', 'url': 'exercise6task4'}
                      )
          }
         )
@@ -84,13 +83,15 @@ CONTENT_TEXTAREA = ('((e:11.0,(a:8.5,b:8.5):2.5):5.5,(c:14.0,d:14.0):2.5);',
 DNA_LENGTH = (100, 'AGCTC', 1000, 11, 1)
 AA_LENGTH = (1, 11)
 DISTANCE_TO_FATHER = BRANCH_LENGTH = 0.1
-GL_COEFFICIENT = 0.2
+GL_COEFFICIENT = (0.2, 0.8)
 REPETITION_COUNT = 1000
 ARGUMENT_ZIPF_ALPHA = 1.2
 SIMULATIONS_COUNT = (100000, 10000)
 RESULT_ROWS_NUMBER = 3
 RESULT_DATA_PATH = 'data_files'
 EVENTS_COUNT = (20, 4)
+PARAMETER_NUMBER = ('0', '1')
+PARAMETER_P = (0.1, 0.6, 0.8, 0.4)
 
 AMINO_ACIDS = (('A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'),
                ('Ala', 'Arg', 'Asn', 'Asp', 'Cys', 'Gln', 'Glu', 'Gly', 'His', 'Ile', 'Leu', 'Lys', 'Met', 'Phe', 'Pro',
@@ -239,17 +240,27 @@ def exercise5task3():
 
 @app.route('/exercise6task1', methods=['GET'])
 def exercise6task1():
-    return render_template('exercise6task1.html', gl_coefficient=GL_COEFFICIENT,
+    return render_template('exercise6task1.html', gl_coefficient=GL_COEFFICIENT[0], parameter_number=PARAMETER_NUMBER[1],
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
-                                  ' generator a one parameter gain-loss Q matrix (Task #1)'), menu=MENU)
+                                  ' generator a one-parameter gain-loss matrix (Task #1)'), menu=MENU)
 
 
 @app.route('/exercise6task2', methods=['GET'])
 def exercise6task2():
-    return render_template('exercise6task2.html', gl_coefficient=GL_COEFFICIENT,
-                           branch_length=BRANCH_LENGTH, simulations_count=SIMULATIONS_COUNT[1],
+    return render_template('exercise6task2.html', gl_coefficient=GL_COEFFICIENT[0], parameter_number=PARAMETER_NUMBER[0],
+                           branch_length=BRANCH_LENGTH, simulations_count=SIMULATIONS_COUNT[1], aa_length=AA_LENGTH[0],
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
-                                  ' generator a one parameter gain-loss Q matrix (Task #2)'), menu=MENU)
+                                  ' simulator sites along a branch with a one-parameter gain-loss matrix (Task #2)'),
+                           menu=MENU)
+
+
+@app.route('/exercise6task4', methods=['GET'])
+def exercise6task4():
+    return render_template('exercise6task4.html', gl_coefficient=GL_COEFFICIENT[0],
+                           parameter_number=PARAMETER_NUMBER[0],  parameter_p=PARAMETER_P, menu=MENU,
+                           title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
+                                  ' calculator P00, P01, P10, P11 (with a one-parameter gain-loss matrix) '
+                                  '(Task #4, #5)'))
 
 
 @app.route('/check_name', methods=['POST'])
@@ -322,20 +333,37 @@ def change_dna_length():
         return jsonify(message=result)
 
 
-
-@app.route('/simulate_single_site_along_branch_with_one_parameter_matrix', methods=['POST'])
-def simulate_single_site_along_branch():
+@app.route('/calculateParametersP', methods=['POST'])
+def calculateParametersP():
     if request.method == 'POST':
-        branch_length = float(request.form.get('branchLength'))
         gl_coefficient = float(request.form.get('glCoefficient'))
-        simulations_count = int(request.form.get('simulationsCount'))
+        parameters_p = tuple(map(float, request.form.get('parametersP').split(',')))
 
-        statistics = sf.simulate_single_site_along_branch_with_one_parameter_matrix(branch_length, gl_coefficient,
-                                                                                    1, simulations_count)
+        parameter_name = bool(int(request.form.get('parameterName')))
+        parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
+
+        statistics = sf.calculateParametersP(parameters, parameters_p)
         result = df.result_design(statistics)
 
         return jsonify(message=result)
 
+
+@app.route('/simulate_sites_along_branch_with_one_parameter_matrix', methods=['POST'])
+def simulate_sites_along_branch_with_one_parameter_matrix():
+    if request.method == 'POST':
+        aa_length = int(request.form.get('aaLength'))
+        branch_length = float(request.form.get('branchLength'))
+        gl_coefficient = float(request.form.get('glCoefficient'))
+        simulations_count = int(request.form.get('simulationsCount'))
+
+        parameter_name = bool(int(request.form.get('parameterName')))
+        parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
+
+        statistics = sf.simulate_sites_along_branch_with_one_parameter_matrix(branch_length, parameters, aa_length,
+                                                                              simulations_count)
+        result = df.result_design(statistics)
+
+        return jsonify(message=result)
 
 
 @app.route('/simulate_amino_acid_replacements_along_tree', methods=['POST'])
@@ -371,9 +399,11 @@ def simulate_amino_acid_replacements_by_lg():
 @app.route('/get_one_parameter_qmatrix', methods=['POST'])
 def get_one_parameter_qmatrix():
     if request.method == 'POST':
+        parameter_name = bool(int(request.form.get('parameterName')))
         gl_coefficient = float(request.form.get('glCoefficient'))
+        parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
 
-        result = af.get_html_table(af.set_names_to_array(af.get_one_parameter_qmatrix(gl_coefficient, None).tolist(),
+        result = af.get_html_table(af.set_names_to_array(af.get_one_parameter_qmatrix(*parameters).tolist(),
                                                          ('0', '1')))
 
         return jsonify(message=result)

@@ -215,13 +215,25 @@ def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np
             f'no_change_probabilities{node_name}': f'{no_change_probabilities:.5f}'}
 
 
-def simulate_single_site_along_branch_with_one_parameter_matrix(branch_length: float, gl_coefficient: float,
-                                                                aa_length: int, simulations_count: int = 10000
-                                                                ) -> Dict[str, Union[str, float, int]]:
+def calculateParametersP(gl_coefficient: Tuple[Optional[float], None], parameters_p: Tuple[float, ...]) -> Dict[str, Union[str, float, int]]:
     start_time = time()
-    qmatrix = af.get_one_parameter_qmatrix(None, gl_coefficient)
+    qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
+    pij_matrix = af.get_pij_matrix(qmatrix, parameters_p)
+    pij = {f'P<sub>00</sub>({parameters_p[0]})': pij_matrix[0, 0],
+           f'P<sub>01</sub>({parameters_p[1]})': pij_matrix[0, 1],
+           f'P<sub>10</sub>({parameters_p[2]})': pij_matrix[1, 0],
+           f'P<sub>11</sub>({parameters_p[3]})': pij_matrix[1, 1]}
+    result = {'execution_time': convert_seconds(time() - start_time)}
+    result.update(pij)
+    return result
+
+
+def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, gl_coefficient: Tuple[Optional[float],
+                                                          None], aa_length: int, simulations_count: int = 10000
+                                                          ) -> Dict[str, Union[str, float, int]]:
+    start_time = time()
+    qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
     differentce = 0
-    counts = simulations_count * aa_length
 
     for _ in range(simulations_count):
         letters = '01'
@@ -239,7 +251,7 @@ def simulate_single_site_along_branch_with_one_parameter_matrix(branch_length: f
                     break
             aa += i
             new_aa += j
-        differentce += round(get_sequences_differentce(aa, new_aa) / counts, 12)
+        differentce += round(get_sequences_differentce(aa, new_aa) / simulations_count, 12)
     return {'execution_time': convert_seconds(time() - start_time), 'different': differentce, 'same': 1 - differentce}
 
 

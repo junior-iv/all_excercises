@@ -58,8 +58,8 @@ def dna_design(dna: str, different_color: Optional[Tuple[int, int]] = None, styl
     return f'<b>{str_result}</b>'
 
 
-def result_design(statistics: Dict[str, str]) -> str:
+def result_design(statistics: Dict[str, str], change_key: bool = True, change_value: bool = True) -> str:
     result = ''
     for key, value in statistics.items():
-        result += f'{key_design(key)}{value_design(value)}<br>'
+        result += f'{key_design(key, change_key)}{value_design(value, change_value)}<br>'
     return f'<b>{result}</b>'
