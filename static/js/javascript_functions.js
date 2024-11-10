@@ -190,8 +190,10 @@ function getRobinsonFouldsDistance() {
 }
 
 function getOneParameterQMatrix() {
+    const parameterName = document.getElementById('parameterName');
     const glCoefficient = document.getElementById('glCoefficient');
     const formData = new FormData();
+    formData.append('parameterName', parameterName.value);
     formData.append('glCoefficient', glCoefficient.value);
 
     fetch('/get_one_parameter_qmatrix', {
@@ -200,7 +202,7 @@ function getOneParameterQMatrix() {
     })
         .then(response => response.json())
         .then(data => {
-            document.getElementById('result').innerHTML = data.message;
+            document.getElementById('resultTable').innerHTML = data.message;
         })
         .catch(error => {
             console.error('Error:', error);
@@ -227,19 +229,52 @@ function lgToQMatrix() {
         });
 }
 
-function simulateSingleSiteAlongBranchWithOneParameterMatrix() {
+function calculateParametersP() {
+    const parameterName = document.getElementById('parameterName');
     const glCoefficient = document.getElementById('glCoefficient');
+    const parametersP = [document.getElementById('P00').value, document.getElementById('P01').value,
+        document.getElementById('P10').value, document.getElementById('P11').value];
+    const formData = new FormData();
+    formData.append('parameterName', parameterName.value);
+    formData.append('glCoefficient', glCoefficient.value);
+    formData.append('parametersP', parametersP);
+
+    const loaderID = getLoader();
+    setVisibilityLoader(true, loaderID);
+
+    fetch('/calculateParametersP', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            setVisibilityLoader(false, loaderID);
+            showMessage(1, data.message)
+        })
+        .catch(error => {
+            setVisibilityLoader(false, loaderID);
+            console.error('Error:', error);
+            showMessage(3, error.message)
+        });
+}
+
+function simulateSitesAlongBranchWithOneParameterMatrix() {
+    const aaLength = document.getElementById('aaLength');
     const branchLength = document.getElementById('branchLength');
+    const parameterName = document.getElementById('parameterName');
+    const glCoefficient = document.getElementById('glCoefficient');
     const simulationsCount = document.getElementById('simulationsCount');
     const formData = new FormData();
-    formData.append('glCoefficient', glCoefficient.value);
+    formData.append('aaLength', aaLength.value);
     formData.append('branchLength', branchLength.value);
+    formData.append('parameterName', parameterName.value);
+    formData.append('glCoefficient', glCoefficient.value);
     formData.append('simulationsCount', simulationsCount.value);
 
     const loaderID = getLoader();
     setVisibilityLoader(true, loaderID);
 
-    fetch('/simulate_single_site_along_branch_with_one_parameter_matrix', {
+    fetch('/simulate_sites_along_branch_with_one_parameter_matrix', {
         method: 'POST',
         body: formData
     })
