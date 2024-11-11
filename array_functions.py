@@ -5,12 +5,12 @@ from tree import Tree, Node
 COMPARISON_TYPES = {'equal': 0, 'less': 1, 'more': 2}
 
 
-def set_names_to_array(data_array: List[List[Union[int, float]]], node_names: Union[List[str],
+def set_names_to_array(data_array: List[List[Union[int, float]]], row_col_names: Union[List[str],
                        Tuple[str, ...]] = None) -> List[List[Union[None, str, int, float]]]:
-    node_names = get_name(node_names)
+    row_col_names = get_name(row_col_names)
     size = len(data_array[0])
     result_array: List[List[Union[None, str, int, float]]] = [0] * (size + 1)
-    result_array[0] = [None] + [next(node_names) for _ in range(size)]
+    result_array[0] = [None] + [next(row_col_names) for _ in range(size)]
 
     for i in range(size):
         result_array[i + 1] = [result_array[0][i + 1]] + data_array[i]

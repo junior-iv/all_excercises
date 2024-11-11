@@ -26,7 +26,7 @@ def key_design(key: str, change_style: bool = True) -> str:
     return f'{style_tag[0]}{key.replace("_", " ")}:\t{style_tag[1]}'
 
 
-def value_design(value: str, change_style: bool = True) -> str:
+def value_design(value: Optional[str], change_style: bool = True) -> str:
     style_tag = STYLE_TAG[4] if change_style else STYLE_TAG[0]
     return f'{style_tag[0]}{value}{style_tag[1]}'
 

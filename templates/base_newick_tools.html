@@ -181,23 +181,28 @@
            min="1" max="1000000" step="1" class="form-control rounded-pill"/>
 {%- endmacro -%}
 
-{%- macro gl_matrix(parameter_number, gl_coefficient, on_change) -%}
+{%- macro gl_matrix(parameter_name, gl_coefficient) -%}
     <label for="glCoefficient">please provide gain-loss coefficient</label>
     <div class="gap-2 d-flex h-auto mt-1">
-        {%- if on_change -%}
-            <input value="{{gl_coefficient}}" id="glCoefficient" name="glCoefficient" type="number" min="0.01"
-                   onchange="getOneParameterQMatrix()" max="1" step="0.01" class="form-control rounded-pill"/>
-        {% else -%}
-            <input value="{{gl_coefficient}}" id="glCoefficient" name="glCoefficient" type="number" min="0.01"
-                   onchange="" max="1" step="0.01" class="form-control rounded-pill"/>
-        {% endif -%}
-        <input id="parameterName" value="{{parameter_number}}" name="parameterName" list="listParameterName"
-               onchange="getOneParameterQMatrix()" class="form-control rounded-pill w-50"
-               placeholder="please choose the name of parameter">
-        <datalist id="listParameterName">
-            <option value="0"> &pi;0 </option>
-            <option value="1"> &pi;1 </option>
-        </datalist>
+        <input value="{{gl_coefficient}}" id="glCoefficient" name="glCoefficient" type="number" min="0.01"
+               onchange="getOneParameterQMatrix()" max="1" step="0.01" class="form-control rounded-pill"/>
+<!--        <input id="parameterName" value="{{parameter_name}}" name="parameterName" list="listParameterName"-->
+<!--               onchange="getOneParameterQMatrix()" class="form-control rounded-pill w-50"-->
+<!--               placeholder="please choose the name of parameter">-->
+<!--        <datalist id="listParameterName">-->
+<!--            <option value="π0"> π0 </option>-->
+<!--            <option value="π1"> π1 </option>-->
+<!--        </datalist>-->
+        <select id="parameterName" name="parameterName" onchange="getOneParameterQMatrix()"
+                class="form-control rounded-pill w-50">
+            {% if parameter_name == 'π0' -%}
+                <option class="form-control rounded-pill text-light w-50" value="π0"> π0 </option>
+                <option class="form-control rounded-pill text-light w-50" value="π1"> π1 </option>
+            {% else -%}
+                <option class="form-control rounded-pill text-light w-50" value="π1"> π1 </option>
+                <option class="form-control rounded-pill text-light w-50" value="π0"> π0 </option>
+            {% endif -%}
+        </select>
     </div>
     <input id="theTableButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill my-1"
            value="implements a one-parameter gain-loss Q matrix" onclick="getOneParameterQMatrix()"/>

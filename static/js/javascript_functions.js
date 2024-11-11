@@ -15,6 +15,11 @@
 //     document.getElementById('theButton').click();
 //   }
 // };
+
+if (document.querySelector('#glCoefficient')) {
+    getOneParameterQMatrix();
+}
+
 document.getElementById('newickForm').addEventListener('submit', function (e) {
     e.preventDefault();
     document.getElementById('theButton').click();

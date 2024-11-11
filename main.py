@@ -88,9 +88,9 @@ REPETITION_COUNT = 1000
 ARGUMENT_ZIPF_ALPHA = 1.2
 SIMULATIONS_COUNT = (100000, 10000)
 RESULT_ROWS_NUMBER = 3
-RESULT_DATA_PATH = 'data_files'
+RESULT_DATA_PATH = 'result_files'
 EVENTS_COUNT = (20, 4)
-PARAMETER_NUMBER = ('0', '1')
+PARAMETER_NAME = ('π0', 'π1')
 PARAMETER_P = (0.1, 0.6, 0.8, 0.4)
 
 AMINO_ACIDS = (('A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'),
@@ -240,14 +240,14 @@ def exercise5task3():
 
 @app.route('/exercise6task1', methods=['GET'])
 def exercise6task1():
-    return render_template('exercise6task1.html', gl_coefficient=GL_COEFFICIENT[0], parameter_number=PARAMETER_NUMBER[1],
+    return render_template('exercise6task1.html', gl_coefficient=GL_COEFFICIENT[0], parameter_name=PARAMETER_NAME[1],
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
                                   ' generator a one-parameter gain-loss matrix (Task #1)'), menu=MENU)
 
 
 @app.route('/exercise6task2', methods=['GET'])
 def exercise6task2():
-    return render_template('exercise6task2.html', gl_coefficient=GL_COEFFICIENT[0], parameter_number=PARAMETER_NUMBER[0],
+    return render_template('exercise6task2.html', gl_coefficient=GL_COEFFICIENT[0], parameter_name=PARAMETER_NAME[0],
                            branch_length=BRANCH_LENGTH, simulations_count=SIMULATIONS_COUNT[1], aa_length=AA_LENGTH[0],
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
                                   ' simulator sites along a branch with a one-parameter gain-loss matrix (Task #2)'),
@@ -257,7 +257,7 @@ def exercise6task2():
 @app.route('/exercise6task4', methods=['GET'])
 def exercise6task4():
     return render_template('exercise6task4.html', gl_coefficient=GL_COEFFICIENT[0],
-                           parameter_number=PARAMETER_NUMBER[0],  parameter_p=PARAMETER_P, menu=MENU,
+                           parameter_name=PARAMETER_NAME[0],  parameter_p=PARAMETER_P, menu=MENU,
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
                                   ' calculator P00, P01, P10, P11 (with a one-parameter gain-loss matrix) '
                                   '(Task #4, #5)'))
@@ -285,13 +285,13 @@ def clustering():
 @app.route('/result_table', methods=['GET'])
 def result_table():
     if request.method == 'GET':
-        file_name = request.args["file_name"]
-        full_file_name = f'{RESULT_DATA_PATH}/{file_name}.txt'
+        file_name = request.args['file_name']
+        full_file_name = f'{RESULT_DATA_PATH}/{file_name}'
         with open(full_file_name, 'r') as f:
             model_table = f.read()
 
-        return render_template('table.html', title=(f' - file number ', f'  ({file_name})'),
-                               model_table=model_table, menu=MENU)
+        return render_template('table.html', title=(f' - file name ', f'  ({file_name})'), menu=MENU,
+                               model_table=model_table)
 
 
 @app.route('/get_robinson_foulds_distance', methods=['POST'])
@@ -324,7 +324,8 @@ def change_dna_length():
         for key, value in sequences.items():
             if key.find('_dna_sequence') != -1:
                 if 'length_of_insertion' in sequences.keys() and key == 'last_dna_sequence':
-                    value = df.dna_design(value, (sequences['start_position'], sequences['end_position']), (14, 11))
+                    value = df.dna_design(value, (sequences['start_position'], sequences['end_position']),
+                                          (14, 11))
                 else:
                     value = df.dna_design(value)
             message += f'{df.key_design(key)}{df.value_design(value)}<br>'
@@ -338,8 +339,7 @@ def calculate_pij_matrix():
     if request.method == 'POST':
         gl_coefficient = float(request.form.get('glCoefficient'))
         parameters_p = tuple(map(float, request.form.get('parametersP').split(',')))
-
-        parameter_name = bool(int(request.form.get('parameterName')))
+        parameter_name = bool(int(request.form.get('parameterName')[-1:]))
         parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
 
         statistics = sf.calculate_pij_matrix(parameters, parameters_p)
@@ -355,8 +355,7 @@ def simulate_sites_along_branch_with_one_parameter_matrix():
         branch_length = float(request.form.get('branchLength'))
         gl_coefficient = float(request.form.get('glCoefficient'))
         simulations_count = int(request.form.get('simulationsCount'))
-
-        parameter_name = bool(int(request.form.get('parameterName')))
+        parameter_name = bool(int(request.form.get('parameterName')[-1:]))
         parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
 
         statistics = sf.simulate_sites_along_branch_with_one_parameter_matrix(branch_length, parameters, aa_length,
@@ -399,12 +398,11 @@ def simulate_amino_acid_replacements_by_lg():
 @app.route('/get_one_parameter_qmatrix', methods=['POST'])
 def get_one_parameter_qmatrix():
     if request.method == 'POST':
-        parameter_name = bool(int(request.form.get('parameterName')))
+        parameter_name = bool(int(request.form.get('parameterName')[-1:]))
         gl_coefficient = float(request.form.get('glCoefficient'))
         parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
 
-        result = af.get_html_table(af.set_names_to_array(af.get_one_parameter_qmatrix(*parameters).tolist(),
-                                                         ('0', '1')))
+        result = af.get_html_table(af.set_names_to_array(af.get_one_parameter_qmatrix(*parameters).tolist(), ('0', '1')))
 
         return jsonify(message=result)
 
@@ -426,7 +424,6 @@ def simulate_pairwise_alignment():
         events_count = int(request.form.get('eventsCount'))
 
         statistics = sf.simulate_pairwise_alignment(dna_length, events_count, -49)
-
         result = df.result_design(statistics)
 
         return jsonify(message=result)

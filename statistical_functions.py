@@ -366,16 +366,14 @@ def calculate_simulations_statistics(repetition_count: int, branch_length: float
     sequences_list = generate_sequences(repetition_count, branch_length, method, dna_length)
     average_distance = f'{sum([x[0] for x in sequences_list]) / repetition_count:.3f}'
     execution_time = convert_seconds(time() - start_time)
-    first_dna_sequence = sequences_list[0][1]
-    last_dna_sequence = sequences_list[0][2]
     url = url_for("result_table",
                   file_name=get_html_table_file_name(sequences_list, ("number", "count", "probability")))
 
     return {'execution_time': execution_time,
             'including_file_generation': convert_seconds(time() - start_time),
             'average_distance': average_distance,
-            'first_dna_sequence': first_dna_sequence,
-            'last_dna_sequence': last_dna_sequence,
+            'first_dna_sequence': sequences_list[0][1],
+            'last_dna_sequence': sequences_list[0][2],
             'url': f'<a href=\"{url}\">{url}</a>'}
 
 
@@ -433,12 +431,17 @@ def get_html_table(data_array: List[Tuple[Union[float, int, str], ...]], str_tab
 
 def get_html_table_file_name(data_array: List[Tuple[Union[float, int, str], ...]],
                              head: Tuple[str, str, str], variant: int = 1) -> str:
-    str_table = get_html_table(data_array, get_html_table_head(head), variant)
+    if not os.path.exists(RESULT_DATA_PATH):
+        os.makedirs(RESULT_DATA_PATH)
+
+    list_dir = os.listdir(RESULT_DATA_PATH)
     while True:
-        name = f'{random.randrange(1000000 * variant, 1000000 * variant + 999999)}'
-        file_name = f'{RESULT_DATA_PATH}/{name}.txt'
-        if not os.path.exists(file_name):
+        name = f'{random.randrange(1000000 * variant, 1000000 * variant + 999999)}.txt'
+        if name not in list_dir:
             break
+
+    file_name = f'{RESULT_DATA_PATH}/{name}'
+    str_table = get_html_table(data_array, get_html_table_head(head), variant)
     with open(file_name, 'w') as f:
         f.write(str_table)
 
