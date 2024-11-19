@@ -750,11 +750,21 @@ hr {
 }
 
 .h5, h5 {
-    font-size: 1.25rem
+    font-size: calc(1.250rem + .15vw)
+}
+@media (min-width: 1200px) {
+    .h5, h5 {
+        font-size: 1.25rem
+    }
 }
 
 .h6, h6 {
-    font-size: 1rem
+    font-size: calc(1.225rem + .15vw)
+}
+@media (min-width: 1200px) {
+    .h6, h6 {
+        font-size: 1rem
+    }
 }
 
 p {
@@ -8731,6 +8741,10 @@ textarea.form-control-lg {
 
 .w-35 {
     width: 35% !important
+}
+
+.w-37 {
+    width: 37% !important
 }
 
 .w-40 {

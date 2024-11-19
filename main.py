@@ -36,7 +36,12 @@ MENU = ({'name': 'Home page', 'url': 'index',
          },
         {'name': 'Exercise #6', 'url': '',
          'submenu': ({'name': 'Task #1', 'url': 'exercise6task1'}, {'name': 'Task #2', 'url': 'exercise6task2'},
-                     {'name': 'Task #4, #5', 'url': 'exercise6task4'}
+                     {'name': 'Task #3', 'url': 'exercise6task3'}, {'name': 'Task #4, #5', 'url': 'exercise6task4'}
+                     )
+         },
+        {'name': 'Exercise #7', 'url': '',
+         'submenu': ({'name': 'Task #1', 'url': 'exercise7task1'}, {'name': 'Task #2', 'url': 'exercise7task2'},
+                     {'name': 'Task #3', 'url': 'exercise7task3'}, {'name': 'Task #4, #5', 'url': 'exercise7task4'}
                      )
          }
         )
@@ -82,7 +87,7 @@ CONTENT_TEXTAREA = ('((e:11.0,(a:8.5,b:8.5):2.5):5.5,(c:14.0,d:14.0):2.5);',
 
 DNA_LENGTH = (100, 'AGCTC', 1000, 11, 1)
 AA_LENGTH = (1, 11)
-DISTANCE_TO_FATHER = BRANCH_LENGTH = 0.1
+DISTANCE_TO_FATHER = 0.1
 GL_COEFFICIENT = (0.2, 0.8)
 REPETITION_COUNT = 1000
 ARGUMENT_ZIPF_ALPHA = 1.2
@@ -92,32 +97,34 @@ RESULT_DATA_PATH = 'result_files'
 EVENTS_COUNT = (20, 4)
 PARAMETER_NAME = ('π0', 'π1')
 PARAMETER_P = (0.1, 0.6, 0.8, 0.4)
+PARAMETER_X = (3, 4, 5)
+LIMIT_X = ((6, 17), (0.01, 10))
+BRANCH_LENGTH = (0.1, 0.5)
 
 AMINO_ACIDS = (('A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'),
                ('Ala', 'Arg', 'Asn', 'Asp', 'Cys', 'Gln', 'Glu', 'Gly', 'His', 'Ile', 'Leu', 'Lys', 'Met', 'Phe', 'Pro',
                 'Ser', 'Thr', 'Trp', 'Tyr', 'Val'))
 DNA = ('A', 'C', 'G', 'T')
 CONTENT_AMINO_ACIDS = ''.join([f'<option value = "{i}" > {i} </option>\n' for i in AMINO_ACIDS[1]])
+DNA_SEQUENCE = ('AACGA', 'AACGT')
 
 
 @app.route('/')
 @app.route('/index', methods=['GET'])
 def index():
-    return render_template('index.html', title=(':', '  Home page'), menu=MENU)
+    return render_template('index.html', menu=MENU, title=(':', '  Home page'))
 
 
 @app.route('/exercise1task1', methods=['GET'])
 def exercise1task1():
-    return render_template('exercise1task1.html',
-                           title=(' - Exercise #1 in building a web-server:',
-                                  ' finding the letter A or a in a name (Task #1)'), menu=MENU)
+    return render_template('exercise1task1.html', menu=MENU, title=(' - Exercise #1 in building a '
+                           'web-server:', ' finding the letter A or a in a name (Task #1)'))
 
 
 @app.route('/exercise1task2', methods=['GET'])
 def exercise1task2():
-    return render_template('exercise1task2.html', content_textarea=CONTENT_TEXTAREA[0],
-                           title=(' - Exercise #1 in building a web-server:', ' finding a node by name (Task #2)'),
-                           menu=MENU)
+    return render_template('exercise1task2.html', content_textarea=CONTENT_TEXTAREA[0], menu=MENU,
+                           title=(' - Exercise #1 in building a web-server:', ' finding a node by name (Task #2)'))
 
 
 @app.route('/exercise2task1', methods=['GET'])
@@ -129,65 +136,64 @@ def exercise2task1():
 
 @app.route('/exercise2task2', methods=['GET'])
 def exercise2task2():
-    return render_template('exercise2task2.html', content_textarea=CONTENT_TEXTAREA[0],
-                           distance_to_father=DISTANCE_TO_FATHER,
-                           title=(' - Exercise #2 in building and visualizing phylogenetic trees:',
-                                  ' adding / removing units to branches (Task #2)'), menu=MENU)
+    return render_template('exercise2task2.html', content_textarea=CONTENT_TEXTAREA[0], menu=MENU,
+                           distance_to_father=DISTANCE_TO_FATHER, title=(' - Exercise #2 in building and visualizing '
+                           'phylogenetic trees:', ' adding / removing units to branches (Task #2)'))
 
 
 @app.route('/exercise2task3', methods=['GET'])
 def exercise2task3():
-    return render_template('exercise2task3.html', content_textarea=CONTENT_TEXTAREA,
+    return render_template('exercise2task3.html', content_textarea=CONTENT_TEXTAREA, menu=MENU,
                            title=(' - Exercise #2 in building and visualizing phylogenetic trees:',
-                                  ' Robinson Folds distance calculation (Task #3)'), menu=MENU)
+                                  ' Robinson Folds distance calculation (Task #3)'))
 
 
 @app.route('/exercise3task1', methods=['GET'])
 def exercise3task1():
-    return render_template('exercise3task1.html', dna_length=DNA_LENGTH[0],
+    return render_template('exercise3task1.html', dna_length=DNA_LENGTH[0], menu=MENU,
                            title=(' - Exercise #3 in building and visualizing phylogenetic trees (simulations):',
-                                  ' generates a random DNA sequence (Task #1)'), menu=MENU)
+                                  ' generates a random DNA sequence (Task #1)'))
 
 
 @app.route('/exercise3task2', methods=['GET'])
 def exercise3task2():
     return render_template('exercise3task2.html', dna_length=DNA_LENGTH[0],
-                           branch_length=BRANCH_LENGTH, repetition_count=REPETITION_COUNT,
+                           branch_length=BRANCH_LENGTH[0], repetition_count=REPETITION_COUNT, menu=MENU,
                            title=(' - Exercise #3 in building and visualizing phylogenetic trees (simulations):',
-                                  ' DNA sequence generator based on the JC model (Task #2, #5)'), menu=MENU)
+                                  ' DNA sequence generator based on the Jukes-Cantor model (Task #2, #5)'))
 
 
 @app.route('/exercise3task3', methods=['GET'])
 def exercise3task3():
     return render_template('exercise3task3.html', dna_length=DNA_LENGTH[0],
-                           branch_length=BRANCH_LENGTH, repetition_count=REPETITION_COUNT,
+                           branch_length=BRANCH_LENGTH[0], repetition_count=REPETITION_COUNT, menu=MENU,
                            title=(' - Exercise #3 in building and visualizing phylogenetic trees (simulations):',
-                                  ' DNA sequence generator based on the Gillespie algorithm (Task #3, #5)'), menu=MENU)
+                                  ' DNA sequence generator based on the Gillespie algorithm (Task #3, #5)'))
 
 
 @app.route('/exercise3task4', methods=['GET'])
 def exercise3task4():
     return render_template('exercise3task4.html', dna_length=DNA_LENGTH[0],
-                           branch_length=BRANCH_LENGTH, repetition_count=REPETITION_COUNT,
+                           branch_length=BRANCH_LENGTH[0], repetition_count=REPETITION_COUNT, menu=MENU,
                            title=(' - Exercise #3 in building and visualizing phylogenetic trees (simulations):',
                                   ' DNA sequence generator based on the more efficient Gillespie algorithm '
-                                  '(Task #4, #5)'), menu=MENU)
+                                  '(Task #4, #5)'))
 
 
 @app.route('/exercise4task1', methods=['GET'])
 def exercise4task1():
     return render_template('exercise4task1.html', simulations_count=SIMULATIONS_COUNT[0],
-                           argument_zipf_alpha=ARGUMENT_ZIPF_ALPHA, result_rows_number=RESULT_ROWS_NUMBER,
+                           argument_zipf_alpha=ARGUMENT_ZIPF_ALPHA, result_rows_number=RESULT_ROWS_NUMBER, menu=MENU,
                            title=(' - Exercise #4 in building and visualizing phylogenetic trees (simulations):',
-                                  ' generator a truncated Zipfian length distribution (Task #1)'), menu=MENU)
+                                  ' generator a truncated Zipfian length distribution (Task #1)'))
 
 
 @app.route('/exercise4task2', methods=['GET'])
 def exercise4task2():
-    return render_template('exercise4task2.html', dna_length=DNA_LENGTH[1],
+    return render_template('exercise4task2.html', dna_length=DNA_LENGTH[1], menu=MENU,
                            title=(' - Exercise #4 in building and visualizing phylogenetic trees (simulations):',
                                   ' simulator of insertion / deletion of random sequence into / from DNA sequence '
-                                  '(Task #2, #3)'), menu=MENU)
+                                  '(Task #2, #3)'))
 
 
 @app.route('/exercise4task4', methods=['GET'])
@@ -200,10 +206,9 @@ def exercise4task4():
 @app.route('/exercise4task5', methods=['GET'])
 def exercise4task5():
     return render_template('exercise4task5.html', dna_length=DNA_LENGTH[2], simulations_count=SIMULATIONS_COUNT[0],
-                           events_count=EVENTS_COUNT[0],
-                           title=(' - Exercise #4 in building and visualizing phylogenetic trees (simulations):',
-                                  ' simulator of insertion / deletion of random sequence into / from DNA sequence '
-                                  '(Task #5)'), menu=MENU)
+                           events_count=EVENTS_COUNT[0], menu=MENU, title=(' - Exercise #4 in building and visualizing '
+                           'phylogenetic trees (simulations):', ' simulator of insertion / deletion of random sequence '
+                                                                           'into / from DNA sequence (Task #5)'))
 
 
 @app.route('/exercise4task6', methods=['GET'])
@@ -216,26 +221,26 @@ def exercise4task6():
 
 @app.route('/exercise5task1', methods=['GET'])
 def exercise5task1():
-    return render_template('exercise5task1.html', content_textarea=CONTENT_TEXTAREA[2],
+    return render_template('exercise5task1.html', content_textarea=CONTENT_TEXTAREA[2], menu=MENU,
                            title=(' - Exercise #5 simulating with the LG matrix:', ' reads the file LG.txt into a Q '
-                                  'matrix (Task #1)'), menu=MENU)
+                                  'matrix (Task #1)'))
 
 
 @app.route('/exercise5task2', methods=['GET'])
 def exercise5task2():
     return render_template('exercise5task2.html', content_textarea=CONTENT_TEXTAREA[2],
-                           simulations_count=SIMULATIONS_COUNT[1], branch_length=BRANCH_LENGTH, aa_length=AA_LENGTH[0],
-                           content_amino_acids=CONTENT_AMINO_ACIDS,
+                           simulations_count=SIMULATIONS_COUNT[1], branch_length=BRANCH_LENGTH[0],
+                           aa_length=AA_LENGTH[0], content_amino_acids=CONTENT_AMINO_ACIDS, menu=MENU,
                            title=(' - Exercise #5 simulating with the LG matrix:', ' simulator of the amino acid '
-                                  'replacements using the LG matrix (Task #2)'), menu=MENU)
+                                  'replacements using the LG matrix (Task #2)'))
 
 
 @app.route('/exercise5task3', methods=['GET'])
 def exercise5task3():
     return render_template('exercise5task3.html', content_textarea=CONTENT_TEXTAREA,
-                           simulations_count=SIMULATIONS_COUNT[0], aa_length=AA_LENGTH[0],
+                           simulations_count=SIMULATIONS_COUNT[0], aa_length=AA_LENGTH[0], menu=MENU,
                            title=(' - Exercise #5 simulating with the LG matrix:', ' simulator of the amino acid '
-                                  'replacements using the LG matrix, along the tree (Task #3)'), menu=MENU)
+                                  'replacements using the LG matrix, along the tree (Task #3)'))
 
 
 @app.route('/exercise6task1', methods=['GET'])
@@ -248,10 +253,18 @@ def exercise6task1():
 @app.route('/exercise6task2', methods=['GET'])
 def exercise6task2():
     return render_template('exercise6task2.html', gl_coefficient=GL_COEFFICIENT[0], parameter_name=PARAMETER_NAME[0],
-                           branch_length=BRANCH_LENGTH, simulations_count=SIMULATIONS_COUNT[1], aa_length=AA_LENGTH[0],
+                           branch_length=BRANCH_LENGTH[0], simulations_count=SIMULATIONS_COUNT[1], menu=MENU,
+                           aa_length=AA_LENGTH[0], title=(' - Exercise #6 processing data with two-state continuous '
+                           'time Markov models:', ' simulator sites along a branch with a one-parameter gain-loss '
+                                                          'matrix (Task #2)'))
+
+
+@app.route('/exercise6task3', methods=['GET'])
+def exercise6task3():
+    return render_template('exercise6task3.html', menu=MENU,
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
-                                  ' simulator sites along a branch with a one-parameter gain-loss matrix (Task #2)'),
-                           menu=MENU)
+                                  ' analytical derivation of formulas for P(t)'
+                                  '(Task #3)'))
 
 
 @app.route('/exercise6task4', methods=['GET'])
@@ -259,8 +272,36 @@ def exercise6task4():
     return render_template('exercise6task4.html', gl_coefficient=GL_COEFFICIENT[0],
                            parameter_name=PARAMETER_NAME[0],  parameter_p=PARAMETER_P, menu=MENU,
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
-                                  ' calculator P00, P01, P10, P11 (with a one-parameter gain-loss matrix) '
-                                  '(Task #4, #5)'))
+                                  ' calculator P<sub>00</sub>, P<sub>01</sub>, P<sub>10</sub>, P<sub>11</sub> '
+                                  '(with a one-parameter gain-loss matrix) (Task #4, #5)'))
+
+
+@app.route('/exercise7task1', methods=['GET'])
+def exercise7task1():
+    return render_template('exercise7task1.html', menu=MENU, title=(' - Exercise #7 optimizing the log-likelihood '
+                           'numerically for the Jukes-Cantor  model:', ' minimization of scalar function using the '
+                                                                       'modified Powell algorithm (Task #1)'))
+
+
+@app.route('/exercise7task2', methods=['GET'])
+def exercise7task2():
+    return render_template('exercise7task2.html', menu=MENU, title=(' - Exercise #7 optimizing the log-likelihood '
+                           'numerically for the Jukes-Cantor model:', ' minimization of scalar function using the '
+                                                                      'modified Powell algorithm (Task #2)'))
+
+
+@app.route('/exercise7task3', methods=['GET'])
+def exercise7task3():
+    return render_template('exercise7task3.html', menu=MENU, limit_x=LIMIT_X[0],
+                           title=(' - Exercise #7 optimizing the log-likelihood numerically for the Jukes-Cantor '
+                           'model:', ' minimization of scalar function using the modified Powell algorithm (Task #3)'))
+
+
+@app.route('/exercise7task4', methods=['GET'])
+def exercise7task4():
+    return render_template('exercise7task4.html', menu=MENU, dna=DNA_SEQUENCE, branch_length=BRANCH_LENGTH[1],
+                           limit_x=LIMIT_X[0], title=(' - Exercise #7 optimizing the log-likelihood numerically for '
+                           'the Jukes-Cantor  model:', ' log-likelihood of the pair sequence (Task #4, #5)'))
 
 
 @app.route('/check_name', methods=['POST'])
@@ -334,6 +375,37 @@ def change_dna_length():
         return jsonify(message=result)
 
 
+@app.route('/get_log_likelihood', methods=['POST'])
+def get_log_likelihood():
+    if request.method == 'POST':
+        dna = tuple(map(str, request.form.get('dna').split(',')))
+        branch_length = float(request.form.get('branchLength'))
+        variant = int(request.form.get('variant'))
+
+        result = sf.get_sequences_log_likelihood(branch_length, *dna, variant)
+
+        return jsonify(message=df.result_design(result))
+
+
+@app.route('/get_maximized', methods=['POST'])
+def get_maximized():
+    if request.method == 'POST':
+        limits_x = request.form.get('limitsX')
+        limits_x = limits_x if limits_x is None else tuple(map(float, limits_x.split(',')))
+
+        result = sf.get_maximized(2, limits_x)
+
+        return jsonify(message=df.result_design(result))
+
+
+@app.route('/get_minimized', methods=['GET'])
+def get_minimized():
+    if request.method == 'GET':
+        result = sf.get_minimized(3)
+
+        return jsonify(message=df.result_design(result))
+
+
 @app.route('/calculate_pij_matrix', methods=['POST'])
 def calculate_pij_matrix():
     if request.method == 'POST':
@@ -402,7 +474,8 @@ def get_one_parameter_qmatrix():
         gl_coefficient = float(request.form.get('glCoefficient'))
         parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
 
-        result = af.get_html_table(af.set_names_to_array(af.get_one_parameter_qmatrix(*parameters).tolist(), ('0', '1')))
+        result = af.get_html_table(af.set_names_to_array(af.get_one_parameter_qmatrix(*parameters).tolist(),
+                                                         ('0', '1')))
 
         return jsonify(message=result)
 
@@ -488,7 +561,7 @@ def get_zipfian_distribution():
 
 @app.route('/upload_file', methods=['POST'])
 def upload_file():
-    '''
+    """
     Handle a POST request containing a file and return its contents.
 
     This function processes a POST request with JSON data that includes a file upload under the
@@ -500,7 +573,7 @@ def upload_file():
 
     Response: A response object where the body contains a JSON object with a single key
                   'message' containing the content of the uploaded file as a string.
-    '''
+    """
     if request.method == 'POST':
         newick_file = request.files.get('newickFile')
 
@@ -514,7 +587,7 @@ def upload_file():
 
 @app.route('/find_node', methods=['POST'])
 def find_node():
-    '''
+    """
     Process a POST request containing JSON data to search for a node in a tree.
 
     This function handles a POST request with JSON payload that includes a Newick formatted
@@ -529,7 +602,7 @@ def find_node():
     Response: A response object where the body contains a JSON object with a single key
                   'message' indicating whether the node was found in the tree. The value is `True`
                   if the node is present, `False` otherwise.
-    '''
+    """
     if request.method == 'POST':
         newick_text = request.form.get('newickText')
         node_name = request.form.get('nodeName')

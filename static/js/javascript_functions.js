@@ -15,6 +15,18 @@
 //     document.getElementById('theButton').click();
 //   }
 // };
+// if (document.querySelector('#carousel')) {
+// document.addEventListener('DOMContentLoaded', function () {
+//     let elems = document.querySelector('.carousel');
+//     let instances = M.Carousel.init(elems, {
+//         duration: 1000,
+//         dist: -50,
+//         shift: 20,
+//         numVisible: 3,
+//         fullWidth: true
+//     });
+// });
+// }
 
 if (document.querySelector('#glCoefficient')) {
     getOneParameterQMatrix();
@@ -356,6 +368,83 @@ function simulateAminoAcidReplacementsByLG() {
             showMessage(3, error.message)
         });
 }
+
+
+function getMinimized() {
+    const loaderID = getLoader();
+    setVisibilityLoader(true, loaderID);
+
+    fetch('/get_minimized', {
+        method: 'GET',
+    })
+        .then(response => response.json())
+        .then(data => {
+            setVisibilityLoader(false, loaderID);
+            showMessage(1, data.message)
+        })
+        .catch(error => {
+            setVisibilityLoader(false, loaderID);
+            console.error('Error:', error);
+            showMessage(3, error.message)
+        });
+}
+
+
+function getLogLikelihood(v = 1) {
+    const formData = new FormData();
+    const variant = v;
+    const branchLength = document.getElementById('branchLength');
+    const dna = [document.getElementById('dna1').value, document.getElementById('dna2').value];
+    formData.append('branchLength', branchLength.value);
+    formData.append('dna', dna);
+    formData.append('variant', v);
+
+    const loaderID = getLoader();
+    setVisibilityLoader(true, loaderID);
+
+    fetch('/get_log_likelihood', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            setVisibilityLoader(false, loaderID);
+            showMessage(1, data.message)
+        })
+        .catch(error => {
+            setVisibilityLoader(false, loaderID);
+            console.error('Error:', error);
+            showMessage(3, error.message)
+        });
+}
+
+
+function getMaximized() {
+    const formData = new FormData();
+    if (document.querySelector('#minX')) {
+        const limitsX = [document.getElementById('minX').value, document.getElementById('maxX').value];
+        formData.append('limitsX', limitsX);
+    }
+
+    const loaderID = getLoader();
+    setVisibilityLoader(true, loaderID);
+
+    fetch('/get_maximized', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            setVisibilityLoader(false, loaderID);
+            showMessage(1, data.message)
+        })
+        .catch(error => {
+            setVisibilityLoader(false, loaderID);
+            console.error('Error:', error);
+            showMessage(3, error.message)
+        });
+}
+
 
 function generateDNASequence() {
     const dnaLength = document.getElementById('dnaLength');

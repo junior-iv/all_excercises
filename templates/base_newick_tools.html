@@ -186,13 +186,6 @@
     <div class="gap-2 d-flex h-auto mt-1">
         <input value="{{gl_coefficient}}" id="glCoefficient" name="glCoefficient" type="number" min="0.01"
                onchange="getOneParameterQMatrix()" max="1" step="0.01" class="form-control rounded-pill"/>
-<!--        <input id="parameterName" value="{{parameter_name}}" name="parameterName" list="listParameterName"-->
-<!--               onchange="getOneParameterQMatrix()" class="form-control rounded-pill w-50"-->
-<!--               placeholder="please choose the name of parameter">-->
-<!--        <datalist id="listParameterName">-->
-<!--            <option value="π0"> π0 </option>-->
-<!--            <option value="π1"> π1 </option>-->
-<!--        </datalist>-->
         <select id="parameterName" name="parameterName" onchange="getOneParameterQMatrix()"
                 class="form-control rounded-pill w-50">
             {% if parameter_name == 'π0' -%}
