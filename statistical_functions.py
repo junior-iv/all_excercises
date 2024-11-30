@@ -171,12 +171,16 @@ def simulate_indel_events(dna_length: int = 4, events_count: int = 1, low: int =
 
 
 def get_replacement(current_time: float, branch_length: float, qmatrix: np.ndarray, amino_acids_frequencies: np.ndarray,
-                    acid: str, aa_index: int) -> Tuple[float, int, str, str]:
-    j = m = acid
+                    amino_acid: str, aa_index: int) -> Tuple[float, int, str, str]:
+    j = m = amino_acid
     lambda_param = -qmatrix[aa_index][aa_index]
     counter = 0
     while True:
-        current_time += rnd.exponential(lambda_param)
+        # the exercise says that "Note that in Python np.random.exponential() gets as input 1/rate parameter,
+        # so if you want to draw exponential numbers with a rate parameter 5,
+        # you have to give the parameter 0.2 to the function." So you should give 1/(-Q_mm), and not just (Qmm)
+        # also not sure if Qmm used here should be taken from the matrix before normalization or after, but let's assume after
+        current_time += rnd.exponential(1/lambda_param)
         if current_time <= branch_length:
             j = get_random_amino_acid_sequence(1, amino_acids_frequencies, )
             counter += 1 if j != m else 0
@@ -255,6 +259,12 @@ def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, 
     return {'execution_time': convert_seconds(time() - start_time), 'different': differentce, 'same': 1 - differentce}
 
 
+# I believe this function works for this specific tree, but it's not generic and will be wrong for another tree
+# you are not doing a full simulation along the whole tree...
+# in each simulation you should go over the whole tree and return the resulting sequences from the leaves and statistics
+# but your outer loop goes over the noes and branches, and then you do 100000 simulations for each of them separately
+# instead of going through all tree in each simulation... if the tree would have internal nodes (joint ancestors for some of the leaves)
+# would you did would be totally wrong!!
 def simulate_amino_acid_replacements_along_tree(lg_text: str, newick_text: str, simulations_count: int = 100000,
                                                 aa_length: int = 10) -> Dict[str, str]:
     start_time = time()
