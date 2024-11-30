@@ -232,8 +232,7 @@ function lgToQMatrix() {
 function calculateParametersP() {
     const parameterName = document.getElementById('parameterName');
     const glCoefficient = document.getElementById('glCoefficient');
-    const parametersP = [document.getElementById('P00').value, document.getElementById('P01').value,
-        document.getElementById('P10').value, document.getElementById('P11').value];
+    const parametersP = [document.getElementById('t').value];
     const formData = new FormData();
     formData.append('parameterName', parameterName.value);
     formData.append('glCoefficient', glCoefficient.value);

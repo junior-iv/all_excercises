@@ -53,10 +53,11 @@ def get_pij_matrix(qmatrix: np.ndarray, p_time: Tuple[float, ...]) -> np.ndarray
     gain = qmatrix[0][1]
     loss = qmatrix[1][0]
     gl = gain + loss
+    # single t parameter is given to all elements in the same matrix
     pij_matrix[0, 0] = loss / gl + np.exp(-gl * p_time[0]) * gain / gl
-    pij_matrix[0, 1] = gain / gl * (1 - np.exp(-gl * p_time[1]))
-    pij_matrix[1, 0] = loss / gl * (1 - np.exp(-gl * p_time[2]))
-    pij_matrix[1, 1] = gain / gl + np.exp(-gl * p_time[3]) * loss / gl
+    pij_matrix[0, 1] = gain / gl * (1 - np.exp(-gl * p_time[0]))
+    pij_matrix[1, 0] = loss / gl * (1 - np.exp(-gl * p_time[0]))
+    pij_matrix[1, 1] = gain / gl + np.exp(-gl * p_time[0]) * loss / gl
 
     return pij_matrix
 

@@ -337,6 +337,8 @@ def change_dna_length():
 def calculateParametersP():
     if request.method == 'POST':
         gl_coefficient = float(request.form.get('glCoefficient'))
+        #this is wrong - there are no "parameters for p" other than a single "branch length" or time = t parameter
+        # a single p-matrix get a single parameter t
         parameters_p = tuple(map(float, request.form.get('parametersP').split(',')))
 
         parameter_name = bool(int(request.form.get('parameterName')))

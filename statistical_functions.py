@@ -222,11 +222,15 @@ def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np
 def calculateParametersP(gl_coefficient: Tuple[Optional[float], None], parameters_p: Tuple[float, ...]) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
+    # you can'get p_ij matrix without t ... you need to give time as a SINGLE parameter and it's the same t for all P, there are no 4 parameters...
+    # That's a mistake to give 4 different parameters to the same matrix
+    # the question asks then to calculate P_01 (0.6)+P_10 (0.8)+ P_11 (0.4) , which means run matrix 3 times with different t and get the needed number out of it
+    # but you don't change the t within the same matrix !!!
     pij_matrix = af.get_pij_matrix(qmatrix, parameters_p)
     pij = {f'P<sub>00</sub>({parameters_p[0]})': pij_matrix[0, 0],
-           f'P<sub>01</sub>({parameters_p[1]})': pij_matrix[0, 1],
-           f'P<sub>10</sub>({parameters_p[2]})': pij_matrix[1, 0],
-           f'P<sub>11</sub>({parameters_p[3]})': pij_matrix[1, 1]}
+           f'P<sub>01</sub>({parameters_p[0]})': pij_matrix[0, 1],
+           f'P<sub>10</sub>({parameters_p[0]})': pij_matrix[1, 0],
+           f'P<sub>11</sub>({parameters_p[0]})': pij_matrix[1, 1]}
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update(pij)
     return result
@@ -250,7 +254,10 @@ def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, 
             while True:
                 current_time += rnd.exponential(lambda_param / -qmatrix[int(i)][int(i)])
                 if current_time <= branch_length:
-                    j = rnd.choice([x for x in letters])
+                    # you can't choose the letter you have you should always choose the change, it was clearly mentioned in the question
+                    # changes the results !!!
+                    # j = rnd.choice([x for x in letters])
+                    j = '1' if i == '0' else '0'
                 else:
                     break
             aa += i

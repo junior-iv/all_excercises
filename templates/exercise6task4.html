@@ -29,29 +29,29 @@
             </div>
             <div class="d-flex gap-2 flex-row text-center w-100 justify-content-center">
                 <div class="d-flex gap-2 flex-column text-center w-25">
-                    <label for="P00">P<sub>00</sub></label>
-                    <input value="{{parameter_p[0]}}" id="P00" name="P00" type="number"
+                    <label for="t">t</label>
+                    <input value="{{parameter_p[0]}}" id="t" name="t" type="number"
                            min="0.001" max="1" step="0.001" class="form-control rounded-pill"/>
                 </div>
-                <div class="d-flex gap-2 flex-column text-center w-25">
-                    <label for="P01">P<sub>01</sub></label>
-                    <input value="{{parameter_p[1]}}" id="P01" name="P01" type="number"
-                           min="0.001" max="1" step="0.001" class="form-control rounded-pill"/>
-                </div>
-                <div class="d-flex gap-2 flex-column text-center w-25">
-                    <label for="P10">P<sub>10</sub></label>
-                    <input value="{{parameter_p[2]}}" id="P10" name="P10" type="number"
-                           min="0.001" max="1" step="0.001" class="form-control rounded-pill"/>
-                </div>
-                <div class="d-flex gap-2 flex-column text-center w-25">
-                    <label for="P11">P<sub>11</sub></label>
-                    <input value="{{parameter_p[3]}}" id="P11" name="P11" type="number"
-                           min="0.001" max="1" step="0.001" class="form-control rounded-pill"/>
-                </div>
+{#                <div class="d-flex gap-2 flex-column text-center w-25">#}
+{#                    <label for="P01">P<sub>01</sub></label>#}
+{#                    <input value="{{parameter_p[1]}}" id="P01" name="P01" type="number"#}
+{#                           min="0.001" max="1" step="0.001" class="form-control rounded-pill"/>#}
+{#                </div>#}
+{#                <div class="d-flex gap-2 flex-column text-center w-25">#}
+{#                    <label for="P10">P<sub>10</sub></label>#}
+{#                    <input value="{{parameter_p[2]}}" id="P10" name="P10" type="number"#}
+{#                           min="0.001" max="1" step="0.001" class="form-control rounded-pill"/>#}
+{#                </div>#}
+{#                <div class="d-flex gap-2 flex-column text-center w-25">#}
+{#                    <label for="P11">P<sub>11</sub></label>#}
+{#                    <input value="{{parameter_p[3]}}" id="P11" name="P11" type="number"#}
+{#                           min="0.001" max="1" step="0.001" class="form-control rounded-pill"/>#}
+{#                </div>#}
             </div>
             <div class="gap-2 d-flex h-auto">
                 <input id="theButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill mt-1"
-                       value="calculate P00, P01, P10, P11 (with a one-parameter gain-loss matrix)" onclick="calculateParametersP()"/>
+                       value="calculate P00, P01, P10, P11 (with a one-parameter gain-loss matrix) for a time t" onclick="calculateParametersP()"/>
             </div>
         </div>
         <div class="d-flex gap-2 flex-column text-end w-50 justify-content-start mx-3 my-5">
