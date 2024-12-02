@@ -43,6 +43,10 @@ MENU = ({'name': 'Home page', 'url': 'index',
          'submenu': ({'name': 'Task #1', 'url': 'exercise7task1'}, {'name': 'Task #2', 'url': 'exercise7task2'},
                      {'name': 'Task #3', 'url': 'exercise7task3'}, {'name': 'Task #4, #5', 'url': 'exercise7task4'}
                      )
+         },
+        {'name': 'Exercise #8', 'url': '',
+         'submenu': ({'name': 'Task #1', 'url': 'exercise8task1'}, {'name': 'Task #2', 'url': 'exercise8task2'}
+                     )
          }
         )
 
@@ -83,7 +87,8 @@ CONTENT_TEXTAREA = ('((e:11.0,(a:8.5,b:8.5):2.5):5.5,(c:14.0,d:14.0):2.5);',
                     '\n'
                     '0.079066 0.055941 0.041977 0.053052 0.012937 0.040767 0.071586 0.057337 0.022355 0.062157 '
                     '0.099081 0.064600 0.022951 0.042302 0.044040 0.061197 0.053287 0.012066 0.034155 0.069147',
-                    '(s1:0.2,s2:0.3,s3:0.4);')
+                    '(s1:0.2,s2:0.3,s3:0.4);',
+                    '((S1:0.3,S2:0.15):0.1,S3:0.4);')
 
 DNA_LENGTH = (100, 'AGCTC', 1000, 11, 1)
 AA_LENGTH = (1, 11)
@@ -105,9 +110,12 @@ AMINO_ACIDS = (('A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M',
                ('Ala', 'Arg', 'Asn', 'Asp', 'Cys', 'Gln', 'Glu', 'Gly', 'His', 'Ile', 'Leu', 'Lys', 'Met', 'Phe', 'Pro',
                 'Ser', 'Thr', 'Trp', 'Tyr', 'Val'))
 DNA = ('A', 'C', 'G', 'T')
+BINARY = ('0', '1')
 CONTENT_AMINO_ACIDS = ''.join([f'<option value = "{i}" > {i} </option>\n' for i in AMINO_ACIDS[1]])
-DNA_SEQUENCE = ('AACGA', 'AACGT')
+SEQUENCE = ('AACGA', 'AACGT', '010')
 
+err = f'{df.key_design("Incorrect text of newick format. <br>Example of correct text of newick format", True, 8)}<br>'
+ERRORS = {'incorrect_newick': f'<b>{err}{df.value_design(CONTENT_TEXTAREA[4], True, 6)}</b>'}
 
 @app.route('/')
 @app.route('/index', methods=['GET'])
@@ -280,28 +288,69 @@ def exercise6task4():
 def exercise7task1():
     return render_template('exercise7task1.html', menu=MENU, title=(' - Exercise #7 optimizing the log-likelihood '
                            'numerically for the Jukes-Cantor  model:', ' minimization of scalar function using the '
-                                                                       'modified Powell algorithm (Task #1)'))
+                                                                       'modified \'Powell\' algorithm (Task #1)'))
 
 
 @app.route('/exercise7task2', methods=['GET'])
 def exercise7task2():
     return render_template('exercise7task2.html', menu=MENU, title=(' - Exercise #7 optimizing the log-likelihood '
-                           'numerically for the Jukes-Cantor model:', ' minimization of scalar function using the '
-                                                                      'modified Powell algorithm (Task #2)'))
+                           'numerically for the Jukes-Cantor model:', ' maximization of scalar function using the '
+                                                                      'modified \'Powell\' algorithm (Task #2)'))
 
 
 @app.route('/exercise7task3', methods=['GET'])
 def exercise7task3():
     return render_template('exercise7task3.html', menu=MENU, limit_x=LIMIT_X[0],
                            title=(' - Exercise #7 optimizing the log-likelihood numerically for the Jukes-Cantor '
-                           'model:', ' minimization of scalar function using the modified Powell algorithm (Task #3)'))
+                           'model:', ' maximization of scalar function using the modified \'Powell\' algorithm '
+                                     '(Task #3)'))
 
 
 @app.route('/exercise7task4', methods=['GET'])
 def exercise7task4():
-    return render_template('exercise7task4.html', menu=MENU, dna=DNA_SEQUENCE, branch_length=BRANCH_LENGTH[1],
+    return render_template('exercise7task4.html', menu=MENU, dna=SEQUENCE, branch_length=BRANCH_LENGTH[1],
                            limit_x=LIMIT_X[0], title=(' - Exercise #7 optimizing the log-likelihood numerically for '
                            'the Jukes-Cantor  model:', ' log-likelihood of the pair sequence (Task #4, #5)'))
+
+
+@app.route('/exercise8task1', methods=['GET'])
+def exercise8task1():
+    return render_template('exercise8task1.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
+                           simulations_count=SIMULATIONS_COUNT[0], sequence=SEQUENCE[2],
+                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of a single site '
+                                  'along a tree using the binary Jukes-Cantor model (Task #1, #2)'))
+
+
+@app.route('/exercise8task2', methods=['GET'])
+def exercise8task2():
+    return render_template('exercise8task2.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
+                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of log-likelihood '
+                                  'calculations on data using a single site along the tree with the binary '
+                                  'Jukes-Cantor model (Task #2)'))
+
+
+@app.route('/exercise8task3', methods=['GET'])
+def exercise8task3():
+    return render_template('exercise8task3.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
+                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of log-likelihood '
+                                  'calculations on data using a single site along the tree with the binary '
+                                  'Jukes-Cantor model (Task #3)'))
+
+
+@app.route('/exercise8task4', methods=['GET'])
+def exercise8task4():
+    return render_template('exercise8task4.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
+                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of log-likelihood '
+                                  'calculations on data using a single site along the tree with the binary '
+                                  'Jukes-Cantor model (Task #4)'))
+
+
+@app.route('/exercise8task5', methods=['GET'])
+def exercise8task5():
+    return render_template('exercise8task5.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
+                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of log-likelihood '
+                                  'calculations on data using a single site along the tree with the binary '
+                                  'Jukes-Cantor model (Task #5)'))
 
 
 @app.route('/check_name', methods=['POST'])
@@ -340,7 +389,10 @@ def get_robinson_foulds_distance():
     if request.method == 'POST':
         newick_text1 = request.form.get('newickText1')
         newick_text2 = request.form.get('newickText2')
-        result = Tree.get_robinson_foulds_distance(newick_text1, newick_text2)
+        if Tree.check_newick(newick_text1) and Tree.check_newick(newick_text1):
+            result = Tree.get_robinson_foulds_distance(newick_text1, newick_text2)
+        else:
+            result = ERRORS.get('incorrect_newick')
 
         return jsonify(message=result)
 
@@ -378,11 +430,11 @@ def change_dna_length():
 @app.route('/get_log_likelihood', methods=['POST'])
 def get_log_likelihood():
     if request.method == 'POST':
-        dna = tuple(map(str, request.form.get('dna').split(',')))
+        dna1, dna2 = tuple(map(str, request.form.get('dna').split(',')))
         branch_length = float(request.form.get('branchLength'))
         variant = int(request.form.get('variant'))
 
-        result = sf.get_sequences_log_likelihood(branch_length, *dna, variant)
+        result = sf.get_sequences_log_likelihood(branch_length, dna1, dna2, variant)
 
         return jsonify(message=df.result_design(result))
 
@@ -406,15 +458,15 @@ def get_minimized():
         return jsonify(message=df.result_design(result))
 
 
-@app.route('/calculate_pij_matrix', methods=['POST'])
-def calculate_pij_matrix():
+@app.route('/calculate_pij', methods=['POST'])
+def calculate_pij():
     if request.method == 'POST':
         gl_coefficient = float(request.form.get('glCoefficient'))
         parameters_p = tuple(map(float, request.form.get('parametersP').split(',')))
         parameter_name = bool(int(request.form.get('parameterName')[-1:]))
         parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
 
-        statistics = sf.calculate_pij_matrix(parameters, parameters_p)
+        statistics = sf.calculate_pij(parameters, parameters_p)
         result = df.result_design(statistics)
 
         return jsonify(message=result)
@@ -445,8 +497,12 @@ def simulate_amino_acid_replacements_along_tree():
         aa_length = int(request.form.get('aaLength'))
         simulations_count = int(request.form.get('simulationsCount'))
 
-        statistics = sf.simulate_amino_acid_replacements_along_tree(lg_text, newick_text, simulations_count, aa_length)
-        result = df.result_design(statistics)
+        if Tree.check_newick(newick_text):
+            statistics = sf.simulate_amino_acid_replacements_along_tree(lg_text, newick_text, simulations_count,
+                                                                        aa_length)
+            result = df.result_design(statistics)
+        else:
+            result = ERRORS.get('incorrect_newick')
 
         return jsonify(message=result)
 
@@ -463,6 +519,39 @@ def simulate_amino_acid_replacements_by_lg():
         statistics = sf.simulate_amino_acid_replacements_by_lg(af.lq_to_qmatrix(lg_text), branch_length,
                                                                simulations_count, aa_length, starting_amino_acid)
         result = df.result_design(statistics)
+
+        return jsonify(message=result)
+
+
+@app.route('/simulate_with_binary_jc', methods=['POST'])
+def simulate_with_binary_jc():
+    if request.method == 'POST':
+        newick_text = request.form.get('textArea')
+        final_sequence = request.form.get('finalSequence')
+        simulations_count = request.form.get('simulationsCount')
+        simulations_count = int(simulations_count) if simulations_count else 0
+        variant = int(request.form.get('variant'))
+
+        if Tree.check_newick(newick_text):
+            statistics = sf.simulate_with_binary_jc(newick_text, variant, final_sequence, simulations_count)
+            result = df.result_design(statistics)
+        else:
+            result = ERRORS.get('incorrect_newick')
+
+        return jsonify(message=result)
+
+
+@app.route('/compute_likelihood_with_binary_jc', methods=['POST'])
+def compute_likelihood_with_binary_jc():
+    if request.method == 'POST':
+        newick_text = request.form.get('textArea')
+        final_sequence = request.form.get('finalSequence')
+
+        if Tree.check_newick(newick_text):
+            statistics = sf.compute_likelihood_with_binary_jc(newick_text, final_sequence)
+            result = df.result_design(statistics)
+        else:
+            result = ERRORS.get('incorrect_newick')
 
         return jsonify(message=result)
 
@@ -485,7 +574,13 @@ def lq_to_qmatrix():
     if request.method == 'POST':
         lg_text = request.form.get('textArea')
 
-        result = af.get_html_table(af.set_names_to_array(af.lq_to_qmatrix(lg_text)[0].tolist(), AMINO_ACIDS[1]))
+        result = (f'<details><summary>qmatrix before normalization</summary>\n'
+                  f'{af.get_html_table(af.set_names_to_array(af.lq_to_qmatrix(lg_text)[0].tolist(), AMINO_ACIDS[1]))}\n'
+                  f'</details>\n'
+                  f'<details><summary>qmatrix after normalization</summary>\n'
+                  f'{af.get_html_table(af.set_names_to_array(af.lq_to_qmatrix(lg_text)[1].tolist(), AMINO_ACIDS[1]))}\n'
+                  f'</details>\n')
+
 
         return jsonify(message=result)
 
@@ -611,9 +706,8 @@ def find_node():
             if newick_text:
                 tree = Tree(newick_text)
                 return jsonify(message=tree.find_node_by_name(node_name))
-
-        except Exception as error:
-            return jsonify(message=f'Error: {error}'), 400
+        except Exception:
+            return jsonify(message=ERRORS.get('incorrect_newick'))
 
 
 @app.route('/print_tree', methods=['POST'])
@@ -628,8 +722,8 @@ def print_tree():
                 html_result = tree.get_html_tree(('tree-padding tree-vertical-lines tree-horizontal-lines '
                                                   'tree-summaries tree-markers tree-buttons'), status)
             return jsonify(message=html_result)
-        except Exception as error:
-            return jsonify(message=f'Error: {error}'), 400
+        except Exception:
+            return jsonify(message=ERRORS.get('incorrect_newick'))
 
 
 @app.route('/change_distance_to_father', methods=['POST'])
@@ -643,8 +737,8 @@ def change_distance_to_father():
                 tree.add_distance_to_father(distance_to_father)
                 newick_text = tree.get_newick()
                 return jsonify(message=newick_text)
-            except Exception as error:
-                return jsonify(message=f'Error: {error}'), 400
+            except Exception:
+                return jsonify(message=ERRORS.get('incorrect_newick'))
 
 
 if __name__ == '__main__':

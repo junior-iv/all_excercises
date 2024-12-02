@@ -16,8 +16,8 @@ class Tree:
     def __str__(self) -> str:
         return self.get_newick()
 
-    def print_node_list(self, reverse: bool = False, with_distance: bool = False) -> None:
-        '''
+    def print_node_list(self, reverse: bool = False, with_additional_details: bool = False) -> None:
+        """
         Print a list of nodes.
 
         This function prints a list of nodes. If the `reverse` argument is set to `True`, the list
@@ -27,21 +27,33 @@ class Tree:
         Args:
             reverse (bool, optional): If `True`, print the nodes in reverse order. If `False` (default),
                                       print the nodes in their natural order.
+            with_additional_details (bool, optional): `False` (default)
 
         Returns:
             None: This function does not return any value; it only prints the nodes to the standard output.
-        '''
-        data_structure = self.list_node_names(self.root, reverse, with_distance)
+        """
+        data_structure = self.list_node_names(self.root, reverse, with_additional_details)
 
         str_result = ''
         for i in data_structure:
             str_result += '\n' + i
         print(str_result, '\n')
 
+    def get_list_node_names(self, reverse: bool = False, with_additional_details: bool = False
+                        ) -> List[Dict[str, Union[float, bool, str]]]:
+        return self.list_node_names(self.root, reverse, with_additional_details)
+
+    def get_leaf_count(self) -> int:
+        return sum([x['is_leaf'] for x in self.get_list_node_names(False, True)])
+
+    def get_node_listt(self, name_arg: str = '') -> List[Dict[str, Union[float, bool, str]]]:
+        return [x for x in self.get_list_node_names(False, True) if (x.get(name_arg) and name_arg)
+                or (x.get(name_arg) is None)]
+
     @staticmethod
-    def list_node_names(node: Node, reverse: bool = False, with_distance: bool = False) -> List[Dict[str, Union[float,
-                                                                                                                str]]]:
-        '''
+    def list_node_names(node: Node, reverse: bool = False, with_additional_details: bool = False
+                        ) -> List[Dict[str, Union[float, bool, str]]]:
+        """
         Retrieve a list of descendant nodes from a given node, including the node itself or retrieve a list of
         descendant nodes from the current instance of the `Tree` class.
 
@@ -55,17 +67,29 @@ class Tree:
             reverse (bool, optional): If `True`, the resulting list of nodes will be in reverse order.
                                       If `False` (default), the nodes will be listed in their natural
                                       traversal order.
-            with_distance:
+            with_additional_details (bool, optional): `False` (default)
         Returns:
             list: A list of nodes names including the specified `node` (or the current instance's nodes  names) and its
                                     children. The list is ordered according to the `reverse` argument.
-        '''
+        """
         list_result = []
 
         def get_list(newick_node: Node) -> None:
             nonlocal list_result
-            if with_distance:
-                list_result.append({'node': newick_node.name, 'distance': newick_node.distance_to_father})
+            if with_additional_details:
+                full_distance = [newick_node.distance_to_father]
+                father = newick_node.father
+                lavel = 1
+                # node_list = [newick_node]
+                while father:
+                    # node_list.append(father)
+                    full_distance.append(father.distance_to_father)
+                    lavel += 1
+                    father = father.father
+
+                list_result.append({'node': newick_node.name, 'distance': newick_node.distance_to_father,
+                                    'lavel': lavel, 'is_leaf': not bool(newick_node.children),
+                                    'full_distance': full_distance})
             else:
                 list_result.append(newick_node.name)
             for child in newick_node.children[::-1] if reverse else newick_node.children:
@@ -75,7 +99,7 @@ class Tree:
         return list_result
 
     def get_newick(self, reverse: bool = False) -> str:
-        '''
+        """
         Convert the current tree structure to a Newick formatted string.
 
         This function serializes the tree into a Newick format, which is a standard format for representing
@@ -89,11 +113,11 @@ class Tree:
 
         Returns:
             str: A Newick formatted string representing the tree structure.
-        '''
+        """
         return f'{Node.subtree_to_newick(self.root, reverse)};'
 
     def find_node_by_name(self, name: str, node: Optional[Node] = None) -> bool:
-        '''
+        """
         Search for a node by its name in a tree structure.
 
         This function searches for a node with a specific name within a tree. If a root node is provided,
@@ -108,7 +132,7 @@ class Tree:
 
         Returns:
             bool: `True` if a node with the specified name is found; `False` otherwise.
-        '''
+        """
         node = self.root if node is None else node
         if name == node.name:
             return True
@@ -119,7 +143,7 @@ class Tree:
         return False
 
     def newick_to_tree(self, newick: str) -> Optional['Tree']:
-        '''
+        """
         Convert a Newick formatted string into a tree object.
 
         This function parses a Newick string, which represents a tree structure in a compact format,
@@ -133,7 +157,7 @@ class Tree:
         Returns:
             Tree: An object representing the tree structure parsed from the Newick string. The tree
                   object provides methods and properties to access and manipulate the tree structure.
-        '''
+        """
         newick = newick.replace(' ', '').strip()
         if newick.startswith('(') and newick.endswith(';'):
 
@@ -182,11 +206,11 @@ class Tree:
             return self
 
     def get_html_tree(self, style: str = '', status: str = '') -> str:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         return self.structure_to_html_tree(self.tree_to_structure(), style, status)
 
     def tree_to_structure(self, reverse: bool = False) -> dict:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         return self.subtree_to_structure(self.root, reverse)
 
     def add_distance_to_father(self, distance_to_father: float = 0) -> None:
@@ -214,7 +238,7 @@ class Tree:
 
     @classmethod
     def __get_html_tree(cls, structure: dict, status: str) -> str:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         tags = (f'<details {status}>', '</details>', '<summary>', '</summary>') if structure['children'] else ('', '', '', '')
         str_html = (f'<li> {tags[0]}{tags[2]}{structure["name"].strip()} \t ({structure["distance_to_father"]}) '
                     f'{tags[3]}')
@@ -226,7 +250,7 @@ class Tree:
 
     @classmethod
     def get_robinson_foulds_distance(cls, tree1: Union['Tree', str], tree2: Union['Tree', str]) -> float:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         tree1 = Tree(tree1) if type(tree1) is str else tree1
         tree2 = Tree(tree2) if type(tree2) is str else tree2
 
@@ -243,13 +267,13 @@ class Tree:
 
     @classmethod
     def structure_to_html_tree(cls, structure: dict, styleclass: str = '', status: str = '') -> str:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         return (f'<ul {f" class = {chr(34)}{styleclass}{chr(34)}" if styleclass else ""}>'
                 f'{cls.__get_html_tree(structure, status)}</ul>')
 
     @classmethod
     def subtree_to_structure(cls, node: Node, reverse: bool = False) -> dict:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         dict_node = {'name': node.name.strip(), 'distance_to_father': node.distance_to_father}
         list_children = []
         if node.children:
@@ -259,7 +283,7 @@ class Tree:
         return dict_node
 
     def __find_node_by_name(self, name: str, node: Optional[Node] = None) -> Optional[Node]:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         node = self.root if node is None else node
         if name == node.name:
             return node
@@ -271,7 +295,7 @@ class Tree:
         return None
 
     def __set_children_list_from_string(self, str_children: str, father: Optional[Node], num) -> None:  # List[Node]:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         str_children = str_children[1:-1] if str_children.startswith('(') and str_children.endswith(
             ')') else str_children
         lst_nodes = str_children.split(',')
@@ -281,8 +305,12 @@ class Tree:
             father.children.append(node)
 
     @staticmethod
+    def check_newick(newick_text: str) -> bool:
+        return newick_text.startswith('(') and newick_text[:-1].endswith(')') and newick_text.endswith(';')
+
+    @staticmethod
     def __set_node(node_str: str, num) -> Node:
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         if node_str.find(':') > -1:
             node_data = node_str.split(':')
             node_data[0] = node_data[0] if node_data[0] else 'nd' + str(num()).rjust(4, '0')
@@ -299,7 +327,7 @@ class Tree:
 
     @staticmethod
     def __counter():
-        '''This method is for internal use only.'''
+        """This method is for internal use only."""
         count = 0
 
         def sub_function():

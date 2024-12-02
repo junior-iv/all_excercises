@@ -246,7 +246,7 @@ function lgToQMatrix() {
         });
 }
 
-function calculatePijMatrix() {
+function calculatePij() {
     const parameterName = document.getElementById('parameterName');
     const glCoefficient = document.getElementById('glCoefficient');
     const parametersP = [document.getElementById('P00').value, document.getElementById('P01').value,
@@ -259,7 +259,7 @@ function calculatePijMatrix() {
     const loaderID = getLoader();
     setVisibilityLoader(true, loaderID);
 
-    fetch('/calculate_pij_matrix', {
+    fetch('/calculate_pij', {
         method: 'POST',
         body: formData
     })
@@ -368,6 +368,61 @@ function simulateAminoAcidReplacementsByLG() {
             showMessage(3, error.message)
         });
 }
+function simulateWithBinaryJC(variant = 1) {
+    const textArea = document.getElementById('textArea');
+    const finalSequence = document.getElementById('finalSequence');
+    const simulationsCount = document.getElementById('simulationsCount');
+    const formData = new FormData();
+    formData.append('textArea', textArea.value);
+    formData.append('finalSequence', finalSequence.value);
+    formData.append('simulationsCount', simulationsCount.value);
+    formData.append('variant', variant);
+
+    const loaderID = getLoader();
+    setVisibilityLoader(true, loaderID);
+
+    fetch('/simulate_with_binary_jc', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            setVisibilityLoader(false, loaderID);
+            showMessage(1, data.message)
+        })
+        .catch(error => {
+            setVisibilityLoader(false, loaderID);
+            console.error('Error:', error);
+            showMessage(3, error.message)
+        });
+}
+
+
+function computeLikelihoodWithBinaryJC() {
+    const textArea = document.getElementById('textArea');
+    const finalSequence = document.getElementById('finalSequence');
+    const formData = new FormData();
+    formData.append('textArea', textArea.value);
+    formData.append('finalSequence', finalSequence.value);
+
+    const loaderID = getLoader();
+    setVisibilityLoader(true, loaderID);
+
+    fetch('/compute_likelihood_with_binary_jc', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            setVisibilityLoader(false, loaderID);
+            showMessage(1, data.message)
+        })
+        .catch(error => {
+            setVisibilityLoader(false, loaderID);
+            console.error('Error:', error);
+            showMessage(3, error.message)
+        });
+}
 
 
 function getMinimized() {
@@ -390,14 +445,13 @@ function getMinimized() {
 }
 
 
-function getLogLikelihood(v = 1) {
+function getLogLikelihood(variant = 1) {
     const formData = new FormData();
-    const variant = v;
     const branchLength = document.getElementById('branchLength');
     const dna = [document.getElementById('dna1').value, document.getElementById('dna2').value];
     formData.append('branchLength', branchLength.value);
     formData.append('dna', dna);
-    formData.append('variant', v);
+    formData.append('variant', variant);
 
     const loaderID = getLoader();
     setVisibilityLoader(true, loaderID);
@@ -654,19 +708,19 @@ function getZipfianDistribution() {
         });
 }
 
-function showMessage(v = 1, message = null) {
+function showMessage(variant = 1, message = null) {
     let mode = [];
-    if (v === 1) {
+    if (variant === 1) {
         if (message === null) {message = 'YES'}
         mode = ['hidden', 'hidden', 'visible', 'hidden', 'hidden', message];
-    } else if (v === 2) {
+    } else if (variant === 2) {
         if (message === null) {message = 'NO'}
         mode = ['hidden', 'visible', 'hidden', 'hidden', 'hidden', message];
-    } else if (v === 3) {
+    } else if (variant === 3) {
         mode = ['visible', 'hidden', 'hidden', 'hidden', 'hidden', message];
-    } else if (v === 4) {
+    } else if (variant === 4) {
         mode = ['hidden', 'hidden', 'hidden', 'visible', 'hidden', message];
-    } else if (v === 5) {
+    } else if (variant === 5) {
         mode = ['hidden', 'hidden', 'hidden', 'hidden', 'visible', message];
     }
     document.getElementById('divWarning').style.visibility = mode[0];

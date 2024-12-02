@@ -48,17 +48,18 @@ def get_html_table(data_array: List[List[Union[None, str, int, float]]]) -> str:
     return str_result
 
 
-def get_pij_matrix(qmatrix: np.ndarray, p_time: Tuple[float, ...]) -> np.ndarray:
-    pij_matrix = np.zeros((2, 2), dtype='float64')
+def get_pij(qmatrix: np.ndarray, p_time: float, ij: Tuple[int, ...]) -> np.ndarray:
     gain = qmatrix[0][1]
     loss = qmatrix[1][0]
     gl = gain + loss
-    pij_matrix[0, 0] = loss / gl + np.exp(-gl * p_time[0]) * gain / gl
-    pij_matrix[0, 1] = gain / gl * (1 - np.exp(-gl * p_time[1]))
-    pij_matrix[1, 0] = loss / gl * (1 - np.exp(-gl * p_time[2]))
-    pij_matrix[1, 1] = gain / gl + np.exp(-gl * p_time[3]) * loss / gl
-
-    return pij_matrix
+    if ij == (0, 0):
+        return loss / gl + np.exp(-gl * p_time) * gain / gl
+    elif ij == (0, 1):
+        return gain / gl * (1 - np.exp(-gl * p_time))
+    elif ij == (1, 0):
+        return loss / gl * (1 - np.exp(-gl * p_time))
+    elif ij == (1, 1):
+        return gain / gl + np.exp(-gl * p_time) * loss / gl
 
 
 def get_one_parameter_qmatrix(p0: Optional[float], p1: Optional[float]) -> np.ndarray:
@@ -73,7 +74,7 @@ def get_one_parameter_qmatrix(p0: Optional[float], p1: Optional[float]) -> np.nd
     return qmatrix
 
 
-def lq_to_qmatrix(lg: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def lq_to_qmatrix(lg: str) -> Tuple[np.ndarray, ...]:
     qmatrix = np.zeros((20, 20), dtype='float32')
     lg_list = lg.split('\n')
     amino_acids_frequencies = np.array(1)
@@ -91,6 +92,7 @@ def lq_to_qmatrix(lg: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
                 qmatrix[i][j] = qmatrix[i][j] * amino_acids_frequencies[j]
         qmatrix[i][i] = - np.sum(qmatrix[i])
     divisor = np.sum(np.diag(qmatrix))
+    qmatrix_nn = qmatrix.copy()
     for i in list(range(20)):
         for j in list(range(20)):
             qmatrix[i][j] = - qmatrix[i][j] / divisor
@@ -99,7 +101,7 @@ def lq_to_qmatrix(lg: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     replacement_frequencies = np.array([[0.0 if x == i else replacement_frequencies[i][x] + (1 -
                                        sum(replacement_frequencies[i])) / 19 for x in range(20)] for i in range(20)])
 
-    return qmatrix, amino_acids_frequencies, replacement_frequencies
+    return qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies
 
 
 def get_min(data_array: np.ndarray) -> float:

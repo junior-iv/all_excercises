@@ -24,23 +24,22 @@
     <div class="gap-2 d-flex flex-row justify-content-start h-50 w-100 text-center">
         <div class="container gap-2 d-flex flex-column h-75 w-50 mx-3">
             {{nwt.newick_tool(content_textarea, 'LG', '.txt')}}
-            <label for="aaLength">please provide length of the amino acid sequence</label>
+            <label for="aaLength">please provide the length of the amino acid sequence</label>
             <input value="{{aa_length}}" id="aaLength" name="aaLength" type="number"
                    min="1" max="100000" step="1" class="form-control rounded-pill"/>
-            <label for="branchLength">please provide length of the branch</label>
+            <label for="branchLength">please provide the length of the branch</label>
             <input value="{{branch_length}}" id="branchLength" name="branchLength" type="number"
                    min="0.01" max="100" step="0.01" class="form-control rounded-pill"/>
-            <label for="simulationsCount">please provide count of the simulations</label>
+            <label for="simulationsCount">please provide the number of the simulations</label>
             <input value="{{simulations_count}}" id="simulationsCount" name="simulationsCount" type="number"
                    min="1" max="1000000" step="1" class="form-control rounded-pill"/>
             <div class="gap-2 d-flex h-auto mt-1">
-<!--                <label for="aminoAcid">please choose of amino acid</label>-->
-                <input id="aminoAcid" name="aminoAcid" list="listAminoAcid" class="form-control rounded-pill w-50"
+                <input id="aminoAcid" name="aminoAcid" list="listAminoAcid" class="form-control rounded-pill w-20"
                 placeholder="please choose the starting amino acid"/>
                 <datalist id="listAminoAcid">
                    {{ content_amino_acids|safe }}
                 </datalist>
-                <input id="theButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill w-50"
+                <input id="theButton" name="theButton" type="button" class="form-control btn btn-light rounded-pill w-80"
                        value="simulate amino acid replacements using the LG matrix" onclick="simulateAminoAcidReplacementsByLG()"/>
             </div>
         </div>

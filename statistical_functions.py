@@ -1,4 +1,3 @@
-import math
 from math import exp, log
 from typing import List, Union, Tuple, Optional, Dict
 from numpy import random as rnd
@@ -6,6 +5,7 @@ from time import time
 from datetime import timedelta
 from flask import url_for
 from tree import Tree
+from node import Node
 from scipy.optimize import Bounds, minimize as mz
 
 import numpy as np
@@ -16,6 +16,9 @@ import array_functions as af
 from main import RESULT_DATA_PATH as RESULT_DATA_PATH
 from main import AMINO_ACIDS as AMINO_ACIDS
 from main import DNA as DNA
+from main import BINARY as BINARY
+
+CHARACTERS = {1: DNA, 2: AMINO_ACIDS[0], 3: BINARY}
 
 
 def func_for_ex7_task1(x: List[float]) -> float:
@@ -61,13 +64,12 @@ def __get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str) -
     return result
 
 
-def get_distance(branch_length, dna1, dna2) -> float:
-    # p_same, p_change = get_jukes_cantor_probabilities(branch_length)
+def get_distance(dna1, dna2) -> float:
     return -3/4 * log(1 - 4/3 * get_sequences_differentce(dna1, dna2))
 
 
-
-def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, variant: int) -> Dict[str, float]:
+def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, variant: int
+                                 ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     if variant == 1:
         log_likelihood = __get_sequences_log_likelihood(branch_length, dna1, dna2)
@@ -94,12 +96,12 @@ def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, var
                   f'nit_(min)': int(minimized_function_results.nit),
                   f'nfev_(min)': int(minimized_function_results.nfev),
                   f'message_(min)': str(minimized_function_results.message),
-                  f'<i>f(x)</i>': get_distance(branch_length, dna1, dna2)}
+                  f'<i>f(x)</i>': get_distance(dna1, dna2)}
 
     return result
 
 
-def get_maximized(parameter_x, limits_x: Optional[Tuple[float, float]] = None) -> Dict[str, str]:
+def get_maximized(parameter_x, limits_x: Optional[Tuple[float, float]] = None) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     maximized_function_results = __get_minimized(parameter_x, get_minus_func_for_ex7_task3, bounds=limits_x)
     maximized_function_results.x[0] = round(maximized_function_results.x[0], 7)
@@ -112,7 +114,7 @@ def get_maximized(parameter_x, limits_x: Optional[Tuple[float, float]] = None) -
     return result
 
 
-def get_minimized(parameter_x) -> Dict[str, str]:
+def get_minimized(parameter_x) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     minimized_function_results = __get_minimized(parameter_x, func_for_ex7_task1)
     minimized_function_results.x[0] = round(minimized_function_results.x[0], 7)
@@ -129,40 +131,37 @@ def convert_seconds(seconds: float) -> str:
     return str(timedelta(seconds=seconds))
 
 
-def get_sequences_differentce(dna1: str, dna2: str) -> float:
-    return sum(a != b for a, b in zip(dna1, dna2)) / len(dna1)
+def get_sequences_differentce(sequence1: str, sequence2: str) -> float:
+    return sum(a != b for a, b in zip(sequence1, sequence2)) / len(sequence1)
 
 
-def get_random_sequence(dna_length: Union[int, str, None] = 1, exclusion_index: Optional[int] = None) -> str:
-    dna = DNA if exclusion_index is None else DNA[:exclusion_index] + DNA[:exclusion_index + 1]
+def get_random_sequence(sequence_length: Union[int, str, None] = 1, exclusion_index: Optional[int] = None,
+                        variant: int = 1) -> str:
+    sequence = CHARACTERS[variant] if exclusion_index is None else (CHARACTERS[variant][:exclusion_index] +
+                                                                    CHARACTERS[variant][:exclusion_index + 1])
 
-    return ''.join(rnd.choice(dna, int(dna_length)))
+    return ''.join(rnd.choice(sequence, int(sequence_length)))
 
 
-def get_random_amino_acid_sequence(aa_length: Union[int, str, None] = 1, aa_frequencies: Optional[np.ndarray] = None,
-                                   exclusion_index: Optional[int] = None) -> str:
-    amino_acids = AMINO_ACIDS[0]
-    if exclusion_index is not None:
-        amino_acids = AMINO_ACIDS[0][:exclusion_index] + AMINO_ACIDS[0][:exclusion_index + 1]
-        aa_frequencies = aa_frequencies[:exclusion_index] + aa_frequencies[exclusion_index + 1:]
-
-    return ''.join(rnd.choice(amino_acids, int(aa_length), True, aa_frequencies))
+def get_random_amino_acid_sequence(aa_length: Union[int, str, None] = 1, aa_frequencies: Optional[np.ndarray] = None) -> str:
+    return ''.join(rnd.choice(AMINO_ACIDS[0], int(aa_length), True, aa_frequencies))
 
 
 def get_jukes_cantor_probabilities(branch_length) -> Tuple[float, float]:
     return (1 / 4) + (3 / 4) * exp((-4 / 3) * branch_length), (1 / 4) - (1 / 4) * exp((-4 / 3) * branch_length)
 
 
-def simulate_sequence_jc(branch_length: float, dna_length: Union[int, str, None] = 4) -> Tuple[float, str, str]:
-    dna = get_random_sequence(dna_length)
-    new_dna = ''
+def simulate_sequence_jc(branch_length: float, sequence_length: Union[int, str, None] = 1,
+                         variant: int = 1, sequence: str = '') -> Tuple[float, str, str]:
+    sequence = sequence if sequence else get_random_sequence(sequence_length, None, variant)
+    new_sequence = ''
     p_same, p_change = get_jukes_cantor_probabilities(branch_length)
-    for i in dna:
+    for i in sequence:
         if rnd.random() >= p_same:
-            i = rnd.choice([x for x in DNA if x != i])
-        new_dna += i
+            i = rnd.choice([x for x in CHARACTERS[variant] if x != i])
+        new_sequence += i
 
-    return get_sequences_differentce(dna, new_dna), dna, new_dna
+    return get_sequences_differentce(sequence, new_sequence), sequence, new_sequence
 
 
 def simulate_dna_gillespie(branch_length: float, dna_length: Union[int, str, None] = 4) -> Tuple[float, str, str]:
@@ -210,14 +209,11 @@ def generate_sequences(repetition_count: int, branch_length: float, method: int 
     2 - Gillespie algorithm simulation
     3 - Gillespie algorithm simulation efficient
     """
+    func = {1: simulate_sequence_jc, 2: simulate_dna_gillespie, 3: simulate_dna_gillespie_efficient}
+
     result_list = []
     for i in range(repetition_count):
-        if method == 1:
-            new_row = simulate_sequence_jc(branch_length, dna_length)
-        elif method == 2:
-            new_row = simulate_dna_gillespie(branch_length, dna_length)
-        elif method == 3:
-            new_row = simulate_dna_gillespie_efficient(branch_length, dna_length)
+        new_row = func[method](branch_length, dna_length)
         result_list.append(new_row)
 
     return result_list
@@ -251,7 +247,8 @@ def format_sequence(seq1: List[str], seq2: List[str], sep: str, issite: bool, se
     return sep.join([(seq_dict[i] if issite else i) if i in seq1 else '-' for i in seq2])
 
 
-def simulate_indel_events(dna_length: int = 4, events_count: int = 1, low: int = 0) -> Dict[str, str]:
+def simulate_indel_events(dna_length: int = 4, events_count: int = 1, low: int = 0
+                          ) -> Dict[str, Union[str, float, int]]:
     super_sequence = current_sequence = start_sequence = list(map(str, range(dna_length)))
     dna = get_random_sequence(dna_length)
     seq_dict = {super_sequence[i]: dna[i] for i in range(dna_length)}
@@ -284,9 +281,12 @@ def simulate_indel_events(dna_length: int = 4, events_count: int = 1, low: int =
 
 
 def get_replacement(current_time: float, branch_length: float, qmatrix: np.ndarray, amino_acids_frequencies: np.ndarray,
-                    acid: str, aa_index: int) -> Tuple[float, int, str, str]:
-    j = m = acid
-    lambda_param = -qmatrix[aa_index][aa_index]
+                    amino_acid: str, aa_index: int) -> Tuple[float, int, str, str]:
+    j = m = amino_acid
+    # print(branch_length)
+    # print(-qmatrix[aa_index][aa_index])
+    lambda_param = 1 / -qmatrix[aa_index][aa_index]
+    # print(lambda_param)
     counter = 0
     while True:
         current_time += rnd.exponential(lambda_param)
@@ -299,13 +299,51 @@ def get_replacement(current_time: float, branch_length: float, qmatrix: np.ndarr
     return get_sequences_differentce(m, j), counter, m, j
 
 
-def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np.ndarray, np.ndarray],
+def get_replacement_statistic(replacement_statistic: List[Tuple[float, int, str, str]], name: str = ''
+                              ) -> Dict[str, Union[str, float, int]]:
+    name = f'_({name})' if name else ''
+    replacement_mean = sum([x[1] for x in replacement_statistic]) / len(replacement_statistic)
+    replacement_probabilities = sum([x[0] for x in replacement_statistic]) / len(replacement_statistic)
+    no_change_probabilities = sum([1 - x[0] for x in replacement_statistic]) / len(replacement_statistic)
+
+    return {f'replacement_mean{name}': f'{replacement_mean:.5f}',
+            f'replacement_probabilities{name}': f'{replacement_probabilities:.5f}',
+            f'no_change_probabilities{name}': f'{no_change_probabilities:.5f}'}
+
+
+def __simulate_amino_acid_replacements_along_tree(newick_tree: Tree, probabilities: Tuple[np.ndarray, ...],
+                                                  aa_length: int = 1, starting_amino_acid: Optional[str] = None,
+                                                  name: str = '') -> Tuple[Union[str, float, int], ...]:
+    final_sequence: str = ''
+    qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
+
+    def get_replacements_along_tree(node: Node, amino_acid_sequence: Optional[str] = None) -> None:
+        nonlocal final_sequence, starting_amino_acid
+        if node.father:
+            aa_index = AMINO_ACIDS[0].index(amino_acid_sequence)
+            replacement = get_replacement(0, node.distance_to_father, qmatrix_nn, replacement_frequencies[aa_index],
+                                          amino_acid_sequence, aa_index)
+            amino_acid_sequence = replacement[3]
+            if not node.children:
+                final_sequence += amino_acid_sequence
+        else:
+            amino_acid_sequence = starting_amino_acid = amino_acid_sequence if amino_acid_sequence else (
+                get_random_amino_acid_sequence(aa_length,amino_acids_frequencies))
+        for child in node.children:
+            get_replacements_along_tree(child, amino_acid_sequence)
+
+    get_replacements_along_tree(newick_tree.root, starting_amino_acid)
+
+    return (1 - get_sequences_differentce(final_sequence, starting_amino_acid * len(final_sequence)), final_sequence,
+            starting_amino_acid)
+
+
+def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, ...],
                                              branch_length: float, simulations_count: int = 100000, aa_length: int = 1,
-                                             node_name: str = '', starting_amino_acid: Optional[Union[str, int]] =
-                                             None) -> Dict[str, str]:
-    qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
+                                             name: str = '', starting_amino_acid: Optional[Union[str, int]] =
+                                             None) -> Dict[str, Union[str, float, int]]:
+    qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
     replacement_statistic = []
-    node_name = f'_{node_name}' if node_name else ''
     amino_acid_sequence = ''
 
     for _ in range(simulations_count):
@@ -317,27 +355,21 @@ def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np
             amino_acid_sequence = AMINO_ACIDS[0][starting_amino_acid] * aa_length
         for i in range(aa_length):
             aa_index = AMINO_ACIDS[0].index(amino_acid_sequence[i])
-            replacement_statistic.append(get_replacement(0, branch_length, qmatrix, replacement_frequencies[aa_index],
+            replacement_statistic.append(get_replacement(0, branch_length, qmatrix_nn, replacement_frequencies[aa_index],
                                                          amino_acid_sequence[i], aa_index))
 
-    replacement_mean = sum([x[1] for x in replacement_statistic]) / len(replacement_statistic)
-    replacement_probabilities = sum([x[0] for x in replacement_statistic]) / len(replacement_statistic)
-    no_change_probabilities = sum([1 - x[0] for x in replacement_statistic]) / len(replacement_statistic)
-
-    return {f'replacement_mean{node_name}': f'{replacement_mean:.5f}',
-            f'replacement_probabilities{node_name}': f'{replacement_probabilities:.5f}',
-            f'no_change_probabilities{node_name}': f'{no_change_probabilities:.5f}'}
+    return get_replacement_statistic(replacement_statistic, name)
 
 
-def calculate_pij_matrix(gl_coefficient: Tuple[Optional[float], None],
-                         parameters_p: Tuple[float, ...]) -> Dict[str, Union[str, float, int]]:
+def calculate_pij(gl_coefficient: Tuple[Optional[float], None], parameters_p: Tuple[float, ...]
+                  ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
-    pij_matrix = af.get_pij_matrix(qmatrix, parameters_p)
-    pij = {f'P<sub>00</sub>({parameters_p[0]})': pij_matrix[0, 0],
-           f'P<sub>01</sub>({parameters_p[1]})': pij_matrix[0, 1],
-           f'P<sub>10</sub>({parameters_p[2]})': pij_matrix[1, 0],
-           f'P<sub>11</sub>({parameters_p[3]})': pij_matrix[1, 1]}
+    pij = dict()
+    for parameter in enumerate(parameters_p):
+        ij = (parameter[0] // 2, parameter[0] % 2)
+        pij.update({f'P<sub>{"".join(map(str, ij))}</sub>(<span class="text-success">{parameter[0]}</span>)':
+                    af.get_pij(qmatrix, parameter[1], ij)})
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update(pij)
 
@@ -372,28 +404,141 @@ def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, 
     return {'execution_time': convert_seconds(time() - start_time), 'different': differentce, 'same': 1 - differentce}
 
 
+def change_amino_acid(sequence: Union[str, List[str]], sep: str = ' ') -> Union[str, List[str]]:
+    final_sequence = [AMINO_ACIDS[1][AMINO_ACIDS[0].index(i)] for i in sequence]
+
+    return sep.join(final_sequence) if isinstance(sequence, str) else final_sequence
+
+
 def simulate_amino_acid_replacements_along_tree(lg_text: str, newick_text: str, simulations_count: int = 100000,
-                                                aa_length: int = 10) -> Dict[str, str]:
+                                                aa_length: int = 10) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     probabilities = af.lq_to_qmatrix(lg_text)
     newick_tree = Tree(newick_text)
+    simulations_result = []
+    for i in range(simulations_count):
+        simulations_result.append(__simulate_amino_acid_replacements_along_tree(newick_tree, probabilities, aa_length))
+
+    return {'execution_time': convert_seconds(time() - start_time), 'the_expected_number_of_constant_site':
+            sum([x[0] for x in simulations_result]) / len(simulations_result), 'EXAMPLES': ' ->  ->  -> ',
+            '1)_starting amino acid(-1)': f'{change_amino_acid(simulations_result[-1][2])}',
+            'final_sequence(-1)': f'{change_amino_acid(simulations_result[-1][1])};',
+            '2)_starting amino acid(-2)': f'{change_amino_acid(simulations_result[-2][2])}',
+            'final_sequence(-2)': f'{change_amino_acid(simulations_result[-2][1])};',
+            '3)_starting amino acid(-3)': f'{change_amino_acid(simulations_result[-3][2])}',
+            'final_sequence(-3)': f'{change_amino_acid(simulations_result[-3][1])};',
+            '4)_starting amino acid(-4)': f'{change_amino_acid(simulations_result[-4][2])}',
+            'final_sequence(-4)': f'{change_amino_acid(simulations_result[-4][1])};',
+            '5)_starting amino acid(-5)': f'{change_amino_acid(simulations_result[-5][2])}',
+            'final_sequence(-5)': f'{change_amino_acid(simulations_result[-5][1])};'}
+
+
+def __simulate_with_binary_jc(newick_text: str, sequence_length: int = 1) -> str:
+    tree = Tree(newick_text)
+    sequence = ''
+    char = ''
+
+    def get_sequence(tree_node: Node) -> None:
+        nonlocal sequence, char
+        if tree_node.father:
+            char = simulate_sequence_jc(tree_node.distance_to_father,1, 3, char)[2]
+        else:
+            char = get_random_sequence(sequence_length, None, 3)
+
+        if tree_node.children:
+            for child in tree_node.children:
+                get_sequence(child)
+        else:
+            sequence += char
+
+    get_sequence(tree.root)
+    return sequence
+
+
+def simulate_with_binary_jc(newick_text: str, variant: int = 1, final_sequence: Optional[str] = None,
+                            simulations_count: Optional[int] = None, sequence_length: int = 1
+                            ) -> Dict[str, Union[str, int, float]]:
+    start_time = time()
     simulations_result = dict()
-    nodes = newick_tree.list_node_names(newick_tree.root, False, True)
-    for newick_node in nodes:
-        distance = newick_node.get('distance')
-        if distance:
-            simulations_result.update(__simulate_amino_acid_replacements_by_lg(probabilities, distance,
-                                                                               simulations_count, aa_length,
-                                                                               newick_node.get('node')))
+    if variant == 1:
+        sequence = __simulate_with_binary_jc(newick_text, sequence_length)
+        simulations_result.update({'final_sequence': sequence})
+    else:
+        if not simulations_count:
+            simulations_result.update({'simulations_count': 'number of simulations was entered incorrectly'})
+        if not final_sequence:
+            simulations_result.update({'final_sequence': 'final sequence was entered incorrectly'})
+        if final_sequence and simulations_count and variant == 2:
+            count = 0
+            for _ in range(simulations_count):
+                sequence = __simulate_with_binary_jc(newick_text, sequence_length)
+                count += 1 if sequence == final_sequence else 0
+            likelihood = count / simulations_count
+            simulations_result.update({'sequence_of_interest': final_sequence})
+            simulations_result.update({'simulations_count': simulations_count})
+            simulations_result.update({'number_of_matches': count})
+            simulations_result.update({'likelihood_of_the_data': likelihood})
+
+    result = {'execution_time': convert_seconds(time() - start_time)}
+    result.update(simulations_result)
+    return result
+
+
+def __compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None, sequence_length: int = 1
+                                        ) -> float:
+    sequence_list = [final_sequence[i:i+sequence_length] for i in range(0, len(final_sequence), sequence_length)]
+    tree = Tree(newick_text)
+    sequence = ''
+    char = ''
+    list_node_names = tree.get_list_node_names(False, True)
+    print(tree.get_leaf_count())
+    print(tree.get_list_node_names(False, True))
+    print(tree.get_node_listt())
+
+    # def get_sequence(tree_node: Node) -> None:
+    #     nonlocal sequence, char
+    #     if tree_node.father:
+    #         char = simulate_sequence_jc(tree_node.distance_to_father, sequence_length, 3, char)[2]
+    #     else:
+    #         char = get_random_sequence(sequence_length, None, 3)
+    #
+    #     if tree_node.children:
+    #         for child in tree_node.children:
+    #             get_sequence(child)
+    #     else:
+    #         sequence += char
+    #
+    # get_sequence(tree.root)
+
+    # dna_len = len(dna1)
+    # different_char = dna_len * get_sequences_differentce(dna1, dna2)
+    # same_char = dna_len - different_char
+    # p_same, p_change = get_jukes_cantor_probabilities(branch_length)
+    #
+    # return (same_char * log(p_same, 10)) + (different_char * log(p_change, 10)) + (dna_len * log(0.25, 10))
+    return 0.0
+
+
+def compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None, sequence_length: int = 1
+                                      ) -> Dict[str, Union[str, float, int]]:
+    start_time = time()
+    simulations_result = dict()
+    if final_sequence:
+        likelihood = __compute_likelihood_with_binary_jc(newick_text, final_sequence, sequence_length)
+        simulations_result.update({'likelihood_of_the_data': likelihood})
+    else:
+        simulations_result.update({'final_sequence': 'final sequence was entered incorrectly'})
+
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update(simulations_result)
 
     return result
 
 
-def simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np.ndarray, np.ndarray], branch_length:
+def simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, ...], branch_length:
                                            float, simulations_count: int = 100000, aa_length: int = 10,
-                                           starting_amino_acid: Optional[Union[str, int]] = None) -> Dict[str, str]:
+                                           starting_amino_acid: Optional[Union[str, int]] = None
+                                           ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     simulations_result = __simulate_amino_acid_replacements_by_lg(probabilities, branch_length, simulations_count,
                                                                   aa_length, '', starting_amino_acid)
@@ -403,7 +548,8 @@ def simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, np.n
     return result
 
 
-def simulate_pairwise_alignment(dna_length: int = 4, events_count: int = 1, low: int = 0) -> Dict[str, str]:
+def simulate_pairwise_alignment(dna_length: int = 4, events_count: int = 1, low: int = 0
+                                ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     events_result = simulate_indel_events(dna_length, events_count, low)
     result = {'execution_time': convert_seconds(time() - start_time)}
@@ -413,7 +559,7 @@ def simulate_pairwise_alignment(dna_length: int = 4, events_count: int = 1, low:
 
 
 def calculate_change_dna_length_statistics(repetition_count: int, low: int, dna_length: int = 4,
-                                           events_count: int = 4) -> Dict[str, str]:
+                                           events_count: int = 4) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     event_list = []
     for _ in range(repetition_count):
@@ -434,7 +580,7 @@ def calculate_change_dna_length_statistics(repetition_count: int, low: int, dna_
 
 
 def calculate_event_simulation_statistics(repetition_count: int, low: int, dna_length: Union[int, str, None] = 4,
-                                          method: int = 1) -> Dict[str, str]:
+                                          method: int = 1) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     dna_length = int(dna_length)
     if method == 1:
@@ -479,7 +625,7 @@ def change_dna_length(method: int = 1, dna_length: Union[int, str, None] = 4):
 
 
 def calculate_simulations_statistics(repetition_count: int, branch_length: float, method: int = 1,
-                                     dna_length: Union[int, str, None] = 4) -> Dict[str, str]:
+                                     dna_length: Union[int, str, None] = 4) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     sequences_list = generate_sequences(repetition_count, branch_length, method, dna_length)
     average_distance = f'{sum([x[0] for x in sequences_list]) / repetition_count:.3f}'
@@ -503,7 +649,7 @@ def zipf(alpha: float) -> int:
 
 
 def get_zipf(alpha: float, simulations_count: int = 100000,
-             result_rows_number: int = 5) -> Dict[str, List[Dict[str, str]]]:
+             result_rows_number: int = 5) -> Dict[str, Union[str, float, int, List[Dict[str, Union[str, float, int]]]]]:
     start_time = time()
     probabilities_list = [{'number': i, 'count': 0} for i in range(1, 51)]
     for i in range(simulations_count):

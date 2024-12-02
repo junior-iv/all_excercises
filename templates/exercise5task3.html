@@ -24,13 +24,13 @@
     <div class="gap-2 d-flex flex-row justify-content-start h-50 w-100 text-center">
         <div class="container gap-2 d-flex flex-column h-75 w-50 mx-3">
             {{nwt.newick_tool(content_textarea[2], 'LG', '.txt')}}
-            <label for="aaLength">please provide length of the amino acid sequence</label>
+            <label for="aaLength">please provide the length of the amino acid sequence</label>
             <input value="{{aa_length}}" id="aaLength" name="aaLength" type="number"
                    min="1" max="100000" step="1" class="form-control rounded-pill"/>
-            <label for="simulationsCount">please provide count of the simulations</label>
+            <label for="simulationsCount">please provide the number of the simulations</label>
             <input value="{{simulations_count}}" id="simulationsCount" name="simulationsCount" type="number"
                    min="1" max="1000000" step="1" class="form-control rounded-pill"/>
-            <label for="newickText">please provide newick tree into a text field</label>
+            <label for="newickText">please insert newick tree into a text field</label>
             <textarea spellcheck="false" placeholder="paste the newick tree here" id="newickText" name="newickText" autocomplete="on"
                       rows="2" class="form-control h-15">{{content_textarea[3]}}</textarea>
             <div class="gap-2 d-flex h-auto">

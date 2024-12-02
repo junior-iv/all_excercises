@@ -23,13 +23,13 @@
 <form id="newickForm" method="post" enctype="multipart/form-data" class="form-contact">
     <div class="gap-2 d-flex flex-row justify-content-start h-50 w-100 text-center">
         <div class="container gap-2 d-flex flex-column h-75 w-50 mx-3">
-            <label for="argumentZipfAlpha">please provide alpha argument for the Zipf function</label>
+            <label for="argumentZipfAlpha">please provide an alpha argument for the Zipf function</label>
             <input value="{{argument_zipf_alpha}}" id="argumentZipfAlpha" name="argumentZipfAlpha" type="number"
                    min="1.01" max="10" step="0.01" class="form-control rounded-pill"/>
-            <label for="simulationsCount">please provide count of the simulations</label>
+            <label for="simulationsCount">please provide the number of the simulations</label>
             <input value="{{simulations_count}}" id="simulationsCount" name="simulationsCount" type="number"
                    min="1000" max="1000000" step="1" class="form-control rounded-pill"/>
-            <label for="argumentZipfAlpha">number of result rows</label>
+            <label for="resultRowsNumber">number of the results (rows)</label>
             <input value="{{result_rows_number}}" id="resultRowsNumber" name="resultRowsNumber" type="number"
                    min="1" max="50" step="1" class="form-control rounded-pill"/>
             <div class="gap-2 d-flex h-auto my-3">
