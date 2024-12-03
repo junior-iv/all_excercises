@@ -444,6 +444,7 @@ def get_maximized():
     if request.method == 'POST':
         limits_x = request.form.get('limitsX')
         limits_x = limits_x if limits_x is None else tuple(map(float, limits_x.split(',')))
+        print(limits_x)
 
         result = sf.get_maximized(2, limits_x)
 

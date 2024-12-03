@@ -21,41 +21,41 @@ from main import BINARY as BINARY
 CHARACTERS = {1: DNA, 2: AMINO_ACIDS[0], 3: BINARY}
 
 
-def func_for_ex7_task1(x: List[float]) -> float:
-    return (x[0] - 3) ** 2 - 4
+def minus_func_decorator(func):
+    def wrapper(*args, **kwargs):
+        return -func(*args, **kwargs)
+    return wrapper
 
 
+@minus_func_decorator
 def func_for_ex7_task2(x: List[float]) -> float:
     return 5 - (x[0] - 2) ** 2
 
 
-def get_minus_func_for_ex7_task3(x):
-    return -func_for_ex7_task2(x)
-
-
-def get_minus_func(x, *args, **kwargs):
-    return -__get_sequences_log_likelihood_for_optimization(x, *args, **kwargs)
-
-
-def __get_minimized(parameter_x, func, *args, **kwargs):
-    if kwargs.get('bounds'):
-        bounds = kwargs.pop('bounds')
-        kwargs.update({'bounds': Bounds(bounds[0], bounds[1])})
-    return mz(func, parameter_x, *args, **kwargs)
-
-
+@minus_func_decorator
 def __get_sequences_log_likelihood_for_optimization(branch_length: float, dna1: str, dna2: str) -> float:
     dna_len = len(dna1)
-    different_char = dna_len * get_sequences_differentce(dna1, dna2)
+    different_char = dna_len * get_sequences_difference(dna1, dna2)
     same_char = dna_len - different_char
     p_same, p_change = get_jukes_cantor_probabilities(branch_length)
 
     return (same_char * log(p_same, 10)) + (different_char * log(p_change, 10)) + (dna_len * log(0.25, 10))
 
 
+def func_for_ex7_task1(x: List[float]) -> float:
+    return (x[0] - 3) ** 2 - 4
+
+
+def __get_minimized(func, parameter_x, *args, **kwargs):
+    if kwargs.get('bounds'):
+        bounds = kwargs.pop('bounds')
+        kwargs.update({'bounds': Bounds(bounds[0], bounds[1])})
+    return mz(func, parameter_x, *args, **kwargs)
+
+
 def __get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str) -> Tuple[List[float], ...]:
     dna_len = len(dna1)
-    different_char = dna_len * get_sequences_differentce(dna1, dna2)
+    different_char = dna_len * get_sequences_difference(dna1, dna2)
     same_char = dna_len - different_char
     p_same, p_change = get_jukes_cantor_probabilities(branch_length)
     result = ([same_char * log(p_same, 10)], [different_char * log(p_change, 10)], [dna_len * log(0.25, 10)],
@@ -65,7 +65,7 @@ def __get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str) -
 
 
 def get_distance(dna1, dna2) -> float:
-    return -3/4 * log(1 - 4/3 * get_sequences_differentce(dna1, dna2))
+    return -3/4 * log(1 - 4/3 * get_sequences_difference(dna1, dna2))
 
 
 def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, variant: int
@@ -79,35 +79,25 @@ def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, var
                   f'The_log_likelihood_of_characters_is': log_likelihood[2][0],
                   f'The_log_likelihood_of_these_sequences_is': log_likelihood[3][0]}
     else:
-        maximized_function_results = __get_minimized([branch_length], get_minus_func,
-                                                        (dna1, dna2), bounds=(0.01, 10), method='Powell')
-        minimized_function_results = __get_minimized([branch_length], __get_sequences_log_likelihood_for_optimization,
-                                                        (dna1, dna2), bounds=(0.01, 100), method='Powell')
+        maximized_function_results = __get_minimized(__get_sequences_log_likelihood_for_optimization, [branch_length],
+                                                     (dna1, dna2), bounds=(0.01, 10), method='Powell')
+        # maximized_function_results = __get_minimized(__get_sequences_log_likelihood_for_optimization, [branch_length],
+        #                                              (dna1, dna2), bounds=(0.01, 100), method='Powell')
         result = {f'execution_time': convert_seconds(time() - start_time),
                   f'status_(max)': 'maximized',
-                  f'x_(max)': float(maximized_function_results.x),
-                  f'fun_(max)': float(maximized_function_results.fun),
-                  f'nit_(max)': int(maximized_function_results.nit),
-                  f'nfev_(max)': int(maximized_function_results.nfev),
-                  f'message_(max)': str(maximized_function_results.message),
-                  f'status_(min)': 'minimized',
-                  f'x_(min)': float(minimized_function_results.x),
-                  f'fun_(min)': float(minimized_function_results.fun),
-                  f'nit_(min)': int(minimized_function_results.nit),
-                  f'nfev_(min)': int(minimized_function_results.nfev),
-                  f'message_(min)': str(minimized_function_results.message),
-                  f'<i>f(x)</i>': get_distance(dna1, dna2)}
+                  f'The_function_obtains_its_maximum_in_X': float(maximized_function_results.x[0]),
+                  f'The_value_of_the_function_in_this_maximum_is': -maximized_function_results.fun}
 
     return result
 
 
 def get_maximized(parameter_x, limits_x: Optional[Tuple[float, float]] = None) -> Dict[str, Union[str, float, int]]:
     start_time = time()
-    maximized_function_results = __get_minimized(parameter_x, get_minus_func_for_ex7_task3, bounds=limits_x)
+    maximized_function_results = __get_minimized(func_for_ex7_task2, parameter_x, bounds=limits_x)
     maximized_function_results.x[0] = round(maximized_function_results.x[0], 7)
     dict_results = {f'<i>f(x)</i>': '5 - (x - 2)<sup>2</sup>',
                     f'The_function_obtains_its_maximun_in_X': maximized_function_results.x,
-                    f'The_value_of_the_function_in_this_maximun_is': maximized_function_results.fun}
+                    f'The_value_of_the_function_in_this_maximun_is': -maximized_function_results.fun}
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update(dict_results)
 
@@ -116,7 +106,7 @@ def get_maximized(parameter_x, limits_x: Optional[Tuple[float, float]] = None) -
 
 def get_minimized(parameter_x) -> Dict[str, Union[str, float, int]]:
     start_time = time()
-    minimized_function_results = __get_minimized(parameter_x, func_for_ex7_task1)
+    minimized_function_results = __get_minimized(func_for_ex7_task1, parameter_x)
     minimized_function_results.x[0] = round(minimized_function_results.x[0], 7)
     dict_results = {f'<i>f(x)</i>': '(x - 3)<sup>2</sup> - 4',
                     f'The_function_obtains_its_minimun_in_X': minimized_function_results.x,
@@ -131,7 +121,7 @@ def convert_seconds(seconds: float) -> str:
     return str(timedelta(seconds=seconds))
 
 
-def get_sequences_differentce(sequence1: str, sequence2: str) -> float:
+def get_sequences_difference(sequence1: str, sequence2: str) -> float:
     return sum(a != b for a, b in zip(sequence1, sequence2)) / len(sequence1)
 
 
@@ -161,7 +151,7 @@ def simulate_sequence_jc(branch_length: float, sequence_length: Union[int, str, 
             i = rnd.choice([x for x in CHARACTERS[variant] if x != i])
         new_sequence += i
 
-    return get_sequences_differentce(sequence, new_sequence), sequence, new_sequence
+    return get_sequences_difference(sequence, new_sequence), sequence, new_sequence
 
 
 def simulate_dna_gillespie(branch_length: float, dna_length: Union[int, str, None] = 4) -> Tuple[float, str, str]:
@@ -180,7 +170,7 @@ def simulate_dna_gillespie(branch_length: float, dna_length: Union[int, str, Non
         dna += i
         new_dna += j
 
-    return get_sequences_differentce(dna, new_dna), dna, new_dna
+    return get_sequences_difference(dna, new_dna), dna, new_dna
 
 
 def simulate_dna_gillespie_efficient(branch_length: float,
@@ -198,7 +188,7 @@ def simulate_dna_gillespie_efficient(branch_length: float,
         else:
             break
 
-    return get_sequences_differentce(dna, new_dna), dna, new_dna
+    return get_sequences_difference(dna, new_dna), dna, new_dna
 
 
 def generate_sequences(repetition_count: int, branch_length: float, method: int = 1,
@@ -296,7 +286,7 @@ def get_replacement(current_time: float, branch_length: float, qmatrix: np.ndarr
         else:
             break
 
-    return get_sequences_differentce(m, j), counter, m, j
+    return get_sequences_difference(m, j), counter, m, j
 
 
 def get_replacement_statistic(replacement_statistic: List[Tuple[float, int, str, str]], name: str = ''
@@ -334,7 +324,7 @@ def __simulate_amino_acid_replacements_along_tree(newick_tree: Tree, probabiliti
 
     get_replacements_along_tree(newick_tree.root, starting_amino_acid)
 
-    return (1 - get_sequences_differentce(final_sequence, starting_amino_acid * len(final_sequence)), final_sequence,
+    return (1 - get_sequences_difference(final_sequence, starting_amino_acid * len(final_sequence)), final_sequence,
             starting_amino_acid)
 
 
@@ -381,10 +371,9 @@ def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, 
                                                           ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
-    differentce = 0
+    difference = 0
 
     for _ in range(simulations_count):
-        letters = '01'
         aa = ''
         new_aa = ''
         lambda_param = 1
@@ -392,16 +381,16 @@ def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, 
             current_time = 0
             i = j = '0'
             while True:
-                current_time += rnd.exponential(lambda_param / -qmatrix[int(i)][int(i)])
+                current_time += rnd.exponential(lambda_param / -qmatrix[int(j)][int(j)])
                 if current_time <= branch_length:
-                    j = rnd.choice([x for x in letters])
+                    j = BINARY[int(j) - 1]
                 else:
                     break
             aa += i
             new_aa += j
-        differentce += round(get_sequences_differentce(aa, new_aa) / simulations_count, 12)
+        difference += round(get_sequences_difference(aa, new_aa) / simulations_count, 12)
 
-    return {'execution_time': convert_seconds(time() - start_time), 'different': differentce, 'same': 1 - differentce}
+    return {'execution_time': convert_seconds(time() - start_time), 'different': difference, 'same': 1 - difference}
 
 
 def change_amino_acid(sequence: Union[str, List[str]], sep: str = ' ') -> Union[str, List[str]]:
@@ -511,7 +500,7 @@ def __compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Option
     # get_sequence(tree.root)
 
     # dna_len = len(dna1)
-    # different_char = dna_len * get_sequences_differentce(dna1, dna2)
+    # different_char = dna_len * get_sequences_difference(dna1, dna2)
     # same_char = dna_len - different_char
     # p_same, p_change = get_jukes_cantor_probabilities(branch_length)
     #
