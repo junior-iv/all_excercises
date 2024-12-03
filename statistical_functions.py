@@ -46,7 +46,7 @@ def __get_minimized(parameter_x, func, *args, **kwargs):
 
 def __get_sequences_log_likelihood_for_optimization(branch_length: float, dna1: str, dna2: str) -> float:
     dna_len = len(dna1)
-    different_char = dna_len * get_sequences_differentce(dna1, dna2)
+    different_char = dna_len * get_sequences_difference(dna1, dna2)
     same_char = dna_len - different_char
     p_same, p_change = get_jukes_cantor_probabilities(branch_length)
 
@@ -55,7 +55,7 @@ def __get_sequences_log_likelihood_for_optimization(branch_length: float, dna1: 
 
 def __get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str) -> Tuple[List[float], ...]:
     dna_len = len(dna1)
-    different_char = dna_len * get_sequences_differentce(dna1, dna2)
+    different_char = dna_len * get_sequences_difference(dna1, dna2)
     same_char = dna_len - different_char
     p_same, p_change = get_jukes_cantor_probabilities(branch_length)
     result = ([same_char * log(p_same, 10)], [different_char * log(p_change, 10)], [dna_len * log(0.25, 10)],
@@ -65,7 +65,7 @@ def __get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str) -
 
 
 def get_distance(dna1, dna2) -> float:
-    return -3/4 * log(1 - 4/3 * get_sequences_differentce(dna1, dna2))
+    return -3/4 * log(1 - 4/3 * get_sequences_difference(dna1, dna2))
 
 
 def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, variant: int
@@ -131,7 +131,7 @@ def convert_seconds(seconds: float) -> str:
     return str(timedelta(seconds=seconds))
 
 
-def get_sequences_differentce(sequence1: str, sequence2: str) -> float:
+def get_sequences_difference(sequence1: str, sequence2: str) -> float:
     return sum(a != b for a, b in zip(sequence1, sequence2)) / len(sequence1)
 
 
@@ -161,7 +161,7 @@ def simulate_sequence_jc(branch_length: float, sequence_length: Union[int, str, 
             i = rnd.choice([x for x in CHARACTERS[variant] if x != i])
         new_sequence += i
 
-    return get_sequences_differentce(sequence, new_sequence), sequence, new_sequence
+    return get_sequences_difference(sequence, new_sequence), sequence, new_sequence
 
 
 def simulate_dna_gillespie(branch_length: float, dna_length: Union[int, str, None] = 4) -> Tuple[float, str, str]:
@@ -180,7 +180,7 @@ def simulate_dna_gillespie(branch_length: float, dna_length: Union[int, str, Non
         dna += i
         new_dna += j
 
-    return get_sequences_differentce(dna, new_dna), dna, new_dna
+    return get_sequences_difference(dna, new_dna), dna, new_dna
 
 
 def simulate_dna_gillespie_efficient(branch_length: float,
@@ -198,7 +198,7 @@ def simulate_dna_gillespie_efficient(branch_length: float,
         else:
             break
 
-    return get_sequences_differentce(dna, new_dna), dna, new_dna
+    return get_sequences_difference(dna, new_dna), dna, new_dna
 
 
 def generate_sequences(repetition_count: int, branch_length: float, method: int = 1,
@@ -296,7 +296,7 @@ def get_replacement(current_time: float, branch_length: float, qmatrix: np.ndarr
         else:
             break
 
-    return get_sequences_differentce(m, j), counter, m, j
+    return get_sequences_difference(m, j), counter, m, j
 
 
 def get_replacement_statistic(replacement_statistic: List[Tuple[float, int, str, str]], name: str = ''
@@ -334,7 +334,7 @@ def __simulate_amino_acid_replacements_along_tree(newick_tree: Tree, probabiliti
 
     get_replacements_along_tree(newick_tree.root, starting_amino_acid)
 
-    return (1 - get_sequences_differentce(final_sequence, starting_amino_acid * len(final_sequence)), final_sequence,
+    return (1 - get_sequences_difference(final_sequence, starting_amino_acid * len(final_sequence)), final_sequence,
             starting_amino_acid)
 
 
@@ -381,7 +381,7 @@ def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, 
                                                           ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
-    differentce = 0
+    difference = 0
 
     for _ in range(simulations_count):
         letters = '01'
@@ -392,16 +392,21 @@ def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, 
             current_time = 0
             i = j = '0'
             while True:
-                current_time += rnd.exponential(lambda_param / -qmatrix[int(i)][int(i)])
+                # indices should be of the exact current state (letter), and not just starting one, so it's j and not i
+                current_time += rnd.exponential(lambda_param / -qmatrix[int(j)][int(j)])
                 if current_time <= branch_length:
-                    j = rnd.choice([x for x in letters])
+                    # the exercise clearly states that "If a change has occurred, it is always to the other state"
+                    # so if there was 1 then it should change to zero and if there was zero it should change to 1
+                    # you can't choose again the same letter as you had before
+                    j = '1' if j == '0' else '0'
+                    # j = rnd.choice([x for x in letters])
                 else:
                     break
             aa += i
             new_aa += j
-        differentce += round(get_sequences_differentce(aa, new_aa) / simulations_count, 12)
+        difference += round(get_sequences_difference(aa, new_aa) / simulations_count, 12)
 
-    return {'execution_time': convert_seconds(time() - start_time), 'different': differentce, 'same': 1 - differentce}
+    return {'execution_time': convert_seconds(time() - start_time), 'different': difference, 'same': 1 - difference}
 
 
 def change_amino_acid(sequence: Union[str, List[str]], sep: str = ' ') -> Union[str, List[str]]:
@@ -511,7 +516,7 @@ def __compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Option
     # get_sequence(tree.root)
 
     # dna_len = len(dna1)
-    # different_char = dna_len * get_sequences_differentce(dna1, dna2)
+    # different_char = dna_len * get_sequences_difference(dna1, dna2)
     # same_char = dna_len - different_char
     # p_same, p_change = get_jukes_cantor_probabilities(branch_length)
     #
