@@ -93,7 +93,7 @@ CONTENT_TEXTAREA = ('((e:11.0,(a:8.5,b:8.5):2.5):5.5,(c:14.0,d:14.0):2.5);',
 DNA_LENGTH = (100, 'AGCTC', 1000, 11, 1)
 AA_LENGTH = (1, 11)
 DISTANCE_TO_FATHER = 0.1
-GL_COEFFICIENT = (0.2, 0.8)
+STATE_FREQUENCY = (0.2, 0.8)
 REPETITION_COUNT = 1000
 ARGUMENT_ZIPF_ALPHA = 1.2
 SIMULATIONS_COUNT = (100000, 10000)
@@ -253,14 +253,14 @@ def exercise5task3():
 
 @app.route('/exercise6task1', methods=['GET'])
 def exercise6task1():
-    return render_template('exercise6task1.html', gl_coefficient=GL_COEFFICIENT[0], parameter_name=PARAMETER_NAME[1],
+    return render_template('exercise6task1.html', state_frequency=STATE_FREQUENCY[0], parameter_name=PARAMETER_NAME[1],
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
                                   ' generator a one-parameter gain-loss matrix (Task #1)'), menu=MENU)
 
 
 @app.route('/exercise6task2', methods=['GET'])
 def exercise6task2():
-    return render_template('exercise6task2.html', gl_coefficient=GL_COEFFICIENT[0], parameter_name=PARAMETER_NAME[0],
+    return render_template('exercise6task2.html', state_frequency=STATE_FREQUENCY[0], parameter_name=PARAMETER_NAME[0],
                            branch_length=BRANCH_LENGTH[0], simulations_count=SIMULATIONS_COUNT[1], menu=MENU,
                            aa_length=AA_LENGTH[0], title=(' - Exercise #6 processing data with two-state continuous '
                            'time Markov models:', ' simulator sites along a branch with a one-parameter gain-loss '
@@ -277,7 +277,7 @@ def exercise6task3():
 
 @app.route('/exercise6task4', methods=['GET'])
 def exercise6task4():
-    return render_template('exercise6task4.html', gl_coefficient=GL_COEFFICIENT[0],
+    return render_template('exercise6task4.html', state_frequency=STATE_FREQUENCY[0],
                            parameter_name=PARAMETER_NAME[0],  parameter_p=PARAMETER_P, menu=MENU,
                            title=(' - Exercise #6 processing data with two-state continuous time Markov models:',
                                   ' calculator P<sub>00</sub>, P<sub>01</sub>, P<sub>10</sub>, P<sub>11</sub> '
@@ -309,7 +309,7 @@ def exercise7task3():
 @app.route('/exercise7task4', methods=['GET'])
 def exercise7task4():
     return render_template('exercise7task4.html', menu=MENU, dna=SEQUENCE, branch_length=BRANCH_LENGTH[1],
-                           limit_x=LIMIT_X[0], title=(' - Exercise #7 optimizing the log-likelihood numerically for '
+                           limit_x=LIMIT_X[1], title=(' - Exercise #7 optimizing the log-likelihood numerically for '
                            'the Jukes-Cantor  model:', ' log-likelihood of the pair sequence (Task #4, #5)'))
 
 
@@ -433,8 +433,10 @@ def get_log_likelihood():
         dna1, dna2 = tuple(map(str, request.form.get('dna').split(',')))
         branch_length = float(request.form.get('branchLength'))
         variant = int(request.form.get('variant'))
+        limits_x = request.form.get('limitsX')
+        limits_x = limits_x if limits_x is None else tuple(map(float, limits_x.split(',')))
 
-        result = sf.get_sequences_log_likelihood(branch_length, dna1, dna2, variant)
+        result = sf.get_sequences_log_likelihood(branch_length, dna1, dna2, variant, limits_x)
 
         return jsonify(message=df.result_design(result))
 
@@ -444,7 +446,6 @@ def get_maximized():
     if request.method == 'POST':
         limits_x = request.form.get('limitsX')
         limits_x = limits_x if limits_x is None else tuple(map(float, limits_x.split(',')))
-        print(limits_x)
 
         result = sf.get_maximized(2, limits_x)
 
@@ -462,10 +463,10 @@ def get_minimized():
 @app.route('/calculate_pij', methods=['POST'])
 def calculate_pij():
     if request.method == 'POST':
-        gl_coefficient = float(request.form.get('glCoefficient'))
+        state_frequency = float(request.form.get('stateFrequency'))
         parameters_p = tuple(map(float, request.form.get('parametersP').split(',')))
         parameter_name = bool(int(request.form.get('parameterName')[-1:]))
-        parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
+        parameters = (None, state_frequency) if parameter_name else (state_frequency, None)
 
         statistics = sf.calculate_pij(parameters, parameters_p)
         result = df.result_design(statistics)
@@ -478,10 +479,10 @@ def simulate_sites_along_branch_with_one_parameter_matrix():
     if request.method == 'POST':
         aa_length = int(request.form.get('aaLength'))
         branch_length = float(request.form.get('branchLength'))
-        gl_coefficient = float(request.form.get('glCoefficient'))
+        state_frequency = float(request.form.get('stateFrequency'))
         simulations_count = int(request.form.get('simulationsCount'))
         parameter_name = bool(int(request.form.get('parameterName')[-1:]))
-        parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
+        parameters = (None, state_frequency) if parameter_name else (state_frequency, None)
 
         statistics = sf.simulate_sites_along_branch_with_one_parameter_matrix(branch_length, parameters, aa_length,
                                                                               simulations_count)
@@ -561,8 +562,8 @@ def compute_likelihood_with_binary_jc():
 def get_one_parameter_qmatrix():
     if request.method == 'POST':
         parameter_name = bool(int(request.form.get('parameterName')[-1:]))
-        gl_coefficient = float(request.form.get('glCoefficient'))
-        parameters = (None, gl_coefficient) if parameter_name else (gl_coefficient, None)
+        state_frequency = float(request.form.get('stateFrequency'))
+        parameters = (None, state_frequency) if parameter_name else (state_frequency, None)
 
         result = af.get_html_table(af.set_names_to_array(af.get_one_parameter_qmatrix(*parameters).tolist(),
                                                          ('0', '1')))
@@ -581,7 +582,6 @@ def lq_to_qmatrix():
                   f'<details><summary>qmatrix after normalization</summary>\n'
                   f'{af.get_html_table(af.set_names_to_array(af.lq_to_qmatrix(lg_text)[1].tolist(), AMINO_ACIDS[1]))}\n'
                   f'</details>\n')
-
 
         return jsonify(message=result)
 

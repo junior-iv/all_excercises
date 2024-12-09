@@ -68,8 +68,8 @@ def get_distance(dna1, dna2) -> float:
     return -3/4 * log(1 - 4/3 * get_sequences_difference(dna1, dna2))
 
 
-def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, variant: int
-                                 ) -> Dict[str, Union[str, float, int]]:
+def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, variant: int, limits_x:
+                                 Optional[Tuple[float, float]] = None) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     if variant == 1:
         log_likelihood = __get_sequences_log_likelihood(branch_length, dna1, dna2)
@@ -79,10 +79,9 @@ def get_sequences_log_likelihood(branch_length: float, dna1: str, dna2: str, var
                   f'The_log_likelihood_of_characters_is': log_likelihood[2][0],
                   f'The_log_likelihood_of_these_sequences_is': log_likelihood[3][0]}
     else:
-        maximized_function_results = __get_minimized(__get_sequences_log_likelihood_for_optimization, [branch_length],
-                                                     (dna1, dna2), bounds=(0.01, 10), method='Powell')
-        # maximized_function_results = __get_minimized(__get_sequences_log_likelihood_for_optimization, [branch_length],
-        #                                              (dna1, dna2), bounds=(0.01, 100), method='Powell')
+        print(limits_x)
+        maximized_function_results = __get_minimized(__get_sequences_log_likelihood_for_optimization, branch_length,
+                                                     (dna1, dna2), bounds=limits_x, method='Powell')
         result = {f'execution_time': convert_seconds(time() - start_time),
                   f'status_(max)': 'maximized',
                   f'The_function_obtains_its_maximum_in_X': float(maximized_function_results.x[0]),
@@ -125,7 +124,7 @@ def get_sequences_difference(sequence1: str, sequence2: str) -> float:
     return sum(a != b for a, b in zip(sequence1, sequence2)) / len(sequence1)
 
 
-def get_random_sequence(sequence_length: Union[int, str, None] = 1, exclusion_index: Optional[int] = None,
+def get_random_sequence(sequence_length: Optional[Union[int, str]] = 1, exclusion_index: Optional[int] = None,
                         variant: int = 1) -> str:
     sequence = CHARACTERS[variant] if exclusion_index is None else (CHARACTERS[variant][:exclusion_index] +
                                                                     CHARACTERS[variant][:exclusion_index + 1])
@@ -133,7 +132,8 @@ def get_random_sequence(sequence_length: Union[int, str, None] = 1, exclusion_in
     return ''.join(rnd.choice(sequence, int(sequence_length)))
 
 
-def get_random_amino_acid_sequence(aa_length: Union[int, str, None] = 1, aa_frequencies: Optional[np.ndarray] = None) -> str:
+def get_random_amino_acid_sequence(aa_length: Optional[Union[int, str]] = 1, aa_frequencies: Optional[np.ndarray] = None
+                                   ) -> str:
     return ''.join(rnd.choice(AMINO_ACIDS[0], int(aa_length), True, aa_frequencies))
 
 
@@ -273,10 +273,7 @@ def simulate_indel_events(dna_length: int = 4, events_count: int = 1, low: int =
 def get_replacement(current_time: float, branch_length: float, qmatrix: np.ndarray, amino_acids_frequencies: np.ndarray,
                     amino_acid: str, aa_index: int) -> Tuple[float, int, str, str]:
     j = m = amino_acid
-    # print(branch_length)
-    # print(-qmatrix[aa_index][aa_index])
     lambda_param = 1 / -qmatrix[aa_index][aa_index]
-    # print(lambda_param)
     counter = 0
     while True:
         current_time += rnd.exponential(lambda_param)
@@ -318,7 +315,7 @@ def __simulate_amino_acid_replacements_along_tree(newick_tree: Tree, probabiliti
                 final_sequence += amino_acid_sequence
         else:
             amino_acid_sequence = starting_amino_acid = amino_acid_sequence if amino_acid_sequence else (
-                get_random_amino_acid_sequence(aa_length,amino_acids_frequencies))
+                get_random_amino_acid_sequence(aa_length, amino_acids_frequencies))
         for child in node.children:
             get_replacements_along_tree(child, amino_acid_sequence)
 
@@ -345,16 +342,17 @@ def __simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, ..
             amino_acid_sequence = AMINO_ACIDS[0][starting_amino_acid] * aa_length
         for i in range(aa_length):
             aa_index = AMINO_ACIDS[0].index(amino_acid_sequence[i])
-            replacement_statistic.append(get_replacement(0, branch_length, qmatrix_nn, replacement_frequencies[aa_index],
-                                                         amino_acid_sequence[i], aa_index))
+            replacement_statistic.append(get_replacement(0, branch_length, qmatrix_nn,
+                                                         replacement_frequencies[aa_index], amino_acid_sequence[i],
+                                                         aa_index))
 
     return get_replacement_statistic(replacement_statistic, name)
 
 
-def calculate_pij(gl_coefficient: Tuple[Optional[float], None], parameters_p: Tuple[float, ...]
+def calculate_pij(state_frequency: Tuple[Optional[float], ...], parameters_p: Tuple[float, ...]
                   ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
-    qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
+    qmatrix = af.get_one_parameter_qmatrix(*state_frequency)
     pij = dict()
     for parameter in enumerate(parameters_p):
         ij = (parameter[0] // 2, parameter[0] % 2)
@@ -366,11 +364,11 @@ def calculate_pij(gl_coefficient: Tuple[Optional[float], None], parameters_p: Tu
     return result
 
 
-def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, gl_coefficient: Tuple[Optional[float],
-                                                          None], aa_length: int, simulations_count: int = 10000
+def simulate_sites_along_branch_with_one_parameter_matrix(branch_length: float, state_frequency: Tuple[Optional[float],
+                                                          ...], aa_length: int, simulations_count: int = 10000
                                                           ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
-    qmatrix = af.get_one_parameter_qmatrix(*gl_coefficient)
+    qmatrix = af.get_one_parameter_qmatrix(*state_frequency)
     difference = 0
 
     for _ in range(simulations_count):
@@ -430,7 +428,7 @@ def __simulate_with_binary_jc(newick_text: str, sequence_length: int = 1) -> str
     def get_sequence(tree_node: Node) -> None:
         nonlocal sequence, char
         if tree_node.father:
-            char = simulate_sequence_jc(tree_node.distance_to_father,1, 3, char)[2]
+            char = simulate_sequence_jc(tree_node.distance_to_father, 1, 3, char)[2]
         else:
             char = get_random_sequence(sequence_length, None, 3)
 
@@ -477,12 +475,48 @@ def __compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Option
                                         ) -> float:
     sequence_list = [final_sequence[i:i+sequence_length] for i in range(0, len(final_sequence), sequence_length)]
     tree = Tree(newick_text)
+    list_nodes_info = tree.get_list_nodes_info(False, True)
+    nodes_number = tree.get_node_count('node') - tree.get_node_count('root')
+    # print(nodes_number)
+    # print(tree.get_node_count())
+    # print(tree.get_node_count('leaf'))
+    # print(tree.get_node_count('node'))
+    # print(tree.get_node_count('root'))
+    characters_number = len(BINARY)
+    options_number = characters_number ** nodes_number
+    print(options_number)
+    state_probability = 1 / characters_number
+    result = 0
+    state_frequency = (0.5, None)
+    qmatrix = af.get_one_parameter_qmatrix(*state_frequency)
     sequence = ''
     char = ''
-    list_node_names = tree.get_list_node_names(False, True)
-    print(tree.get_leaf_count())
-    print(tree.get_list_node_names(False, True))
-    print(tree.get_node_listt())
+    list_completed_nodes = []
+    # completed_nodes_list
+
+    for _ in range(options_number):
+        step = state_probability
+        for node_info in list_nodes_info:
+            print(f'{node_info.get("node_type")}:\t\t{node_info}')
+        #         step *= af.get_pij(qmatrix, parameter[1], ij)
+        #
+        # result += step
+    # qmatrix = af.get_one_parameter_qmatrix(*state_frequency)
+    # pij = dict()
+    # for parameter in enumerate(parameters_p):
+    #     ij = (parameter[0] // 2, parameter[0] % 2)
+    #     pij.update({f'P<sub>{"".join(map(str, ij))}</sub>(<span class="text-success">{parameter[0]}</span>)':
+    #                 af.get_pij(qmatrix, parameter[1], ij)})
+    filters = ({'node_type': 'root'}, {'node_type': 'node'})
+    print(tree.get_node_count())
+    print(tree.get_node_count('root'))
+    print(tree.get_node_count('node'))
+    print(tree.get_node_count('leaf'))
+    print(tree.get_list_nodes_info(False, True))
+    print(tree.get_node_list(filters))
+    print(len(BINARY) ** tree.get_node_count())
+    print(1 / len(sequence_list[0]))
+    # * calculate_pij() * af.get_one_parameter_qmatrix(*state_frequency)
 
     # def get_sequence(tree_node: Node) -> None:
     #     nonlocal sequence, char

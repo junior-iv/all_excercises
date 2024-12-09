@@ -1,4 +1,4 @@
-from typing import List, Any, Union, Tuple, Optional, Dict
+from typing import Union, Tuple, Optional, Dict
 
 STYLE_TAG = (('', ''),
              ('<sub class="text-primary-emphasis">', '</sub>'),

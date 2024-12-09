@@ -208,10 +208,10 @@ function getRobinsonFouldsDistance() {
 
 function getOneParameterQMatrix() {
     const parameterName = document.getElementById('parameterName');
-    const glCoefficient = document.getElementById('glCoefficient');
+    const stateFrequency = document.getElementById('stateFrequency');
     const formData = new FormData();
     formData.append('parameterName', parameterName.value);
-    formData.append('glCoefficient', glCoefficient.value);
+    formData.append('stateFrequency', stateFrequency.value);
 
     fetch('/get_one_parameter_qmatrix', {
         method: 'POST',
@@ -248,12 +248,12 @@ function lgToQMatrix() {
 
 function calculatePij() {
     const parameterName = document.getElementById('parameterName');
-    const glCoefficient = document.getElementById('glCoefficient');
+    const stateFrequency = document.getElementById('stateFrequency');
     const parametersP = [document.getElementById('P00').value, document.getElementById('P01').value,
         document.getElementById('P10').value, document.getElementById('P11').value];
     const formData = new FormData();
     formData.append('parameterName', parameterName.value);
-    formData.append('glCoefficient', glCoefficient.value);
+    formData.append('stateFrequency', stateFrequency.value);
     formData.append('parametersP', parametersP);
 
     const loaderID = getLoader();
@@ -279,13 +279,13 @@ function simulateSitesAlongBranchWithOneParameterMatrix() {
     const aaLength = document.getElementById('aaLength');
     const branchLength = document.getElementById('branchLength');
     const parameterName = document.getElementById('parameterName');
-    const glCoefficient = document.getElementById('glCoefficient');
+    const stateFrequency = document.getElementById('stateFrequency');
     const simulationsCount = document.getElementById('simulationsCount');
     const formData = new FormData();
     formData.append('aaLength', aaLength.value);
     formData.append('branchLength', branchLength.value);
     formData.append('parameterName', parameterName.value);
-    formData.append('glCoefficient', glCoefficient.value);
+    formData.append('stateFrequency', stateFrequency.value);
     formData.append('simulationsCount', simulationsCount.value);
 
     const loaderID = getLoader();
@@ -449,6 +449,10 @@ function getLogLikelihood(variant = 1) {
     const formData = new FormData();
     const branchLength = document.getElementById('branchLength');
     const dna = [document.getElementById('dna1').value, document.getElementById('dna2').value];
+    if (document.querySelector('#minX')) {
+        const limitsX = [document.getElementById('minX').value, document.getElementById('maxX').value];
+        formData.append('limitsX', limitsX);
+    }
     formData.append('branchLength', branchLength.value);
     formData.append('dna', dna);
     formData.append('variant', variant);

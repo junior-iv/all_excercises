@@ -1,5 +1,5 @@
 from node import Node
-from typing import Optional, List, Union, Dict
+from typing import Optional, List, Union, Dict, Tuple
 
 
 class Tree:
@@ -32,26 +32,30 @@ class Tree:
         Returns:
             None: This function does not return any value; it only prints the nodes to the standard output.
         """
-        data_structure = self.list_node_names(self.root, reverse, with_additional_details)
+        data_structure = self.list_nodes_info(self.root, reverse, with_additional_details)
 
         str_result = ''
         for i in data_structure:
             str_result += '\n' + i
         print(str_result, '\n')
 
-    def get_list_node_names(self, reverse: bool = False, with_additional_details: bool = False
-                        ) -> List[Dict[str, Union[float, bool, str]]]:
-        return self.list_node_names(self.root, reverse, with_additional_details)
+    def get_list_nodes_info(self, reverse: bool = False, with_additional_details: bool = False
+                            ) -> List[Dict[str, Union[float, bool, str]]]:
+        return self.list_nodes_info(self.root, reverse, with_additional_details)
 
-    def get_leaf_count(self) -> int:
-        return sum([x['is_leaf'] for x in self.get_list_node_names(False, True)])
+    def get_node_count(self, node_type: Optional[str] = None) -> int:
+        """
+        Args:
+            node_type (str, optional): 'leaf' 'node' 'root'
+        """
+        return sum([x.get('node_type') == node_type if node_type else True for x in self.get_list_nodes_info(False, True)])
 
-    def get_node_listt(self, name_arg: str = '') -> List[Dict[str, Union[float, bool, str]]]:
-        return [x for x in self.get_list_node_names(False, True) if (x.get(name_arg) and name_arg)
-                or (x.get(name_arg) is None)]
+    def get_node_list(self, filters: Optional[Tuple[Dict[str, Union[float, int, str, list[float]]], ...]] = None
+                      ) -> List[Dict[str, Union[float, bool, str]]]:
+        return [x for x in self.get_list_nodes_info(False, True) if ((x in filters) if filters else True)]
 
     @staticmethod
-    def list_node_names(node: Node, reverse: bool = False, with_additional_details: bool = False
+    def list_nodes_info(node: Node, reverse: bool = False, with_additional_details: bool = False
                         ) -> List[Dict[str, Union[float, bool, str]]]:
         """
         Retrieve a list of descendant nodes from a given node, including the node itself or retrieve a list of
@@ -77,18 +81,25 @@ class Tree:
         def get_list(newick_node: Node) -> None:
             nonlocal list_result
             if with_additional_details:
+                lavel = 1
                 full_distance = [newick_node.distance_to_father]
                 father = newick_node.father
-                lavel = 1
-                # node_list = [newick_node]
-                while father:
-                    # node_list.append(father)
-                    full_distance.append(father.distance_to_father)
-                    lavel += 1
-                    father = father.father
+                if father:
+                    father_name = father.name
+                    node_type = 'node'
+                    while father:
+                        full_distance.append(father.distance_to_father)
+                        lavel += 1
+                        father = father.father
+                else:
+                    father_name = ''
+                    node_type = 'root'
 
-                list_result.append({'node': newick_node.name, 'distance': newick_node.distance_to_father,
-                                    'lavel': lavel, 'is_leaf': not bool(newick_node.children),
+                if not newick_node.children:
+                    node_type = 'leaf'
+
+                list_result.append({'node': newick_node.name, 'distance': full_distance[0],
+                                    'lavel': lavel, 'node_type': node_type, 'father_name': father_name,
                                     'full_distance': full_distance})
             else:
                 list_result.append(newick_node.name)
@@ -239,7 +250,8 @@ class Tree:
     @classmethod
     def __get_html_tree(cls, structure: dict, status: str) -> str:
         """This method is for internal use only."""
-        tags = (f'<details {status}>', '</details>', '<summary>', '</summary>') if structure['children'] else ('', '', '', '')
+        tags = (f'<details {status}>', '</details>', '<summary>', '</summary>') if structure['children'] else ('', '',
+                                                                                                               '', '')
         str_html = (f'<li> {tags[0]}{tags[2]}{structure["name"].strip()} \t ({structure["distance_to_father"]}) '
                     f'{tags[3]}')
         for child in structure['children']:

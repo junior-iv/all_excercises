@@ -17,20 +17,14 @@ def set_names_to_array(data_array: List[List[Union[int, float]]], row_col_names:
     return result_array
 
 
-def get_column_width(quantity: int) -> int:
-    x = 100 // quantity
-    if x % 5 == 0:
-        dev = 5
-    elif x % 4 == 0:
-        dev = 4
-    elif x % 3 == 0:
-        dev = 3
-    return x - x % dev
+def get_column_width(quantity: int, header_width: int = 5, table_width: int = 100) -> int:
+    return (table_width - header_width) // (quantity - 1)
 
 
-def get_html_table(data_array: List[List[Union[None, str, int, float]]]) -> str:
+def get_html_table(data_array: List[List[Union[None, str, int, float]]], header_width: int = 5,
+                   table_width: int = 100) -> str:
     str_result = '<table id="newickTable" class="w-100 my-6 table-danger bg-light">\n'
-    column_width = get_column_width(len(data_array[0]))
+    column_width = get_column_width(len(data_array[0]), header_width, table_width)
     for row in data_array:
         str_result += '<tr>\n'
         row_index = data_array.index(row)
@@ -39,10 +33,12 @@ def get_html_table(data_array: List[List[Union[None, str, int, float]]]) -> str:
             val_index = row.index(val)
             val = val if type(val) is float else val
             if row_index and val_index:
-                str_result += (f'<td><input id="{row_name}{data_array[0][val_index]}" type="text" placeholder="Default '
-                               f'input" class ="w-100 form-control" label = "" value = "{val:.6f}" readonly></td>\n')
+                str_result += (f'<td><input id="{row_name}{data_array[0][val_index]}" type="text" placeholder='
+                               f'"Default input" class ="w-{table_width} form-control" label = "" value = "'
+                               f'{val:.6f}" readonly></td>\n')
             else:
-                str_result += f'<th class ="w-{column_width} text-center" >{val if val else ""}</th>\n'
+                str_result += (f'<th class ="w-{column_width if val_index > 0 else header_width} text-center" >'
+                               f'{val if val else ""}</th>\n')
         str_result += '</tr>\n'
     str_result += '</table>'
     return str_result
@@ -136,7 +132,7 @@ def get_index(data_array: np.ndarray, value: float, comparison_type: int = 0) ->
 
 
 def get_name(names: Union[List[str], Tuple[str, ...]] = None):
-    '''This method is for internal use only.'''
+    """This method is for internal use only."""
     if names:
         for name in names:
             yield name
@@ -157,7 +153,7 @@ def get_name(names: Union[List[str], Tuple[str, ...]] = None):
 
 
 def counter(count: Optional[int] = None):
-    '''This method is for internal use only.'''
+    """This method is for internal use only."""
     count = count if count else 0
     while True:
         yield 'nd' + str(count).rjust(4, '0')
