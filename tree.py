@@ -1,5 +1,5 @@
 from node import Node
-from typing import Optional, List, Union, Dict, Tuple
+from typing import Optional, List, Union, Dict
 
 
 class Tree:
@@ -16,7 +16,30 @@ class Tree:
     def __str__(self) -> str:
         return self.get_newick()
 
-    def print_node_list(self, reverse: bool = False, with_additional_details: bool = False) -> None:
+    def __eq__(self, other):
+        return self.get_newick() == other.get_newick()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return self.get_node_count() < other.get_node_count()
+
+    def __le__(self, other):
+        newick1 = self.get_newick()
+        newick2 = other.get_newick()
+        return self.get_node_count() < other.get_node_count() or newick1 == newick2 or len(newick1) < len(newick2)
+
+    def __gt__(self, other):
+        return self.get_node_count() > other.get_node_count()
+
+    def __ge__(self, other):
+        newick1 = self.get_newick()
+        newick2 = other.get_newick()
+        return self.get_node_count() > other.get_node_count() or newick1 == newick2 or len(newick1) > len(newick2)
+
+    def print_node_list(self, reverse: bool = False, with_additional_details: bool = False, mode: Optional[str] = None,
+                        filters: Optional[Dict[str, list[Union[float, int, str, list[float]]]]] = None) -> None:
         """
         Print a list of nodes.
 
@@ -28,35 +51,49 @@ class Tree:
             reverse (bool, optional): If `True`, print the nodes in reverse order. If `False` (default),
                                       print the nodes in their natural order.
             with_additional_details (bool, optional): `False` (default)
-
+            mode (Optional[str]): `None` (default), 'pre-order', 'in-order', 'post-order'.
+            filters (Dict, optional):
         Returns:
             None: This function does not return any value; it only prints the nodes to the standard output.
         """
-        data_structure = self.list_nodes_info(self.root, reverse, with_additional_details)
+        data_structure = self.list_nodes_info(self.root, reverse, with_additional_details, mode, filters)
 
         str_result = ''
         for i in data_structure:
-            str_result += '\n' + i
+            str_result = f'{str_result}\n{i}'
         print(str_result, '\n')
 
-    def get_list_nodes_info(self, reverse: bool = False, with_additional_details: bool = False
-                            ) -> List[Dict[str, Union[float, bool, str]]]:
-        return self.list_nodes_info(self.root, reverse, with_additional_details)
-
-    def get_node_count(self, node_type: Optional[str] = None) -> int:
+    def get_list_nodes_info(self, reverse: bool = False, with_additional_details: bool = False, mode: Optional[str] =
+                            None, filters: Optional[Dict[str, list[Union[float, int, str, list[float]]]]] = None
+                            ) -> List[Dict[str, Union[float, bool, str, list[float]]]]:
         """
         Args:
-            node_type (str, optional): 'leaf' 'node' 'root'
+            reverse (bool, optional): If `True`, the resulting list of nodes will be in reverse order.
+                                      If `False` (default), the nodes will be listed in their natural
+                                      traversal order.
+            with_additional_details (bool, optional): `False` (default).
+            mode (Optional[str]): `None` (default), 'pre-order', 'in-order', 'post-order'.
+            filters (Dict, optional):
         """
-        return sum([x.get('node_type') == node_type if node_type else True for x in self.get_list_nodes_info(False, True)])
+        return self.list_nodes_info(self.root, reverse, with_additional_details, mode, filters)
 
-    def get_node_list(self, filters: Optional[Tuple[Dict[str, Union[float, int, str, list[float]]], ...]] = None
-                      ) -> List[Dict[str, Union[float, bool, str]]]:
-        return [x for x in self.get_list_nodes_info(False, True) if ((x in filters) if filters else True)]
+    def get_node_count(self, filters: Optional[Dict[str, list[Union[float, int, str, list[float]]]]] = None) -> int:
+        """
+        Args:
+            filters (Dict, optional):
+        """
+        return len(self.get_list_nodes_info(False, True, None, filters))
 
     @staticmethod
-    def list_nodes_info(node: Node, reverse: bool = False, with_additional_details: bool = False
-                        ) -> List[Dict[str, Union[float, bool, str]]]:
+    def add_nodes_info(permit: int, list_result: List[Dict[str, Union[float, bool, str]]], info: Dict[str,
+                       Union[float, bool, str, list[float]]]):
+        if permit:
+            list_result.append(info)
+
+    @staticmethod
+    def list_nodes_info(node: Node, reverse: bool = False, with_additional_details: bool = False, mode: Optional[str] =
+                        None, filters: Optional[Dict[str, list[Union[float, int, str, list[float]]]]] = None
+                        ) -> List[Dict[str, Union[float, bool, str, list[float]]]]:
         """
         Retrieve a list of descendant nodes from a given node, including the node itself or retrieve a list of
         descendant nodes from the current instance of the `Tree` class.
@@ -71,40 +108,60 @@ class Tree:
             reverse (bool, optional): If `True`, the resulting list of nodes will be in reverse order.
                                       If `False` (default), the nodes will be listed in their natural
                                       traversal order.
-            with_additional_details (bool, optional): `False` (default)
+            with_additional_details (bool, optional): `False` (default).
+            mode (Optional[str]): `None` (default), 'pre-order', 'in-order', 'post-order'.
+            filters (Dict, optional):
         Returns:
             list: A list of nodes names including the specified `node` (or the current instance's nodes  names) and its
                                     children. The list is ordered according to the `reverse` argument.
         """
         list_result = []
+        mode = 'pre-order' if mode is None or mode.lower() not in ('pre-order', 'in-order', 'post-order') else (
+            mode.lower())
 
         def get_list(newick_node: Node) -> None:
             nonlocal list_result
-            if with_additional_details:
-                lavel = 1
-                full_distance = [newick_node.distance_to_father]
-                father = newick_node.father
-                if father:
-                    father_name = father.name
-                    node_type = 'node'
-                    while father:
-                        full_distance.append(father.distance_to_father)
-                        lavel += 1
-                        father = father.father
-                else:
-                    father_name = ''
-                    node_type = 'root'
-
-                if not newick_node.children:
-                    node_type = 'leaf'
-
-                list_result.append({'node': newick_node.name, 'distance': full_distance[0],
-                                    'lavel': lavel, 'node_type': node_type, 'father_name': father_name,
-                                    'full_distance': full_distance})
+            lavel = 1
+            full_distance = [newick_node.distance_to_father]
+            father = newick_node.father
+            if father:
+                father_name = father.name
+                node_type = 'node'
+                while father:
+                    full_distance.append(father.distance_to_father)
+                    lavel += 1
+                    father = father.father
             else:
-                list_result.append(newick_node.name)
-            for child in newick_node.children[::-1] if reverse else newick_node.children:
+                father_name = ''
+                node_type = 'root'
+
+            if not newick_node.children:
+                node_type = 'leaf'
+
+            info = {'node': newick_node.name, 'distance': full_distance[0],
+                    'lavel': lavel, 'node_type': node_type, 'father_name': father_name,
+                    'full_distance': full_distance}
+            if filters:
+                permit = 0
+                for key in filters.keys():
+                    for value in filters[key]:
+                        permit += sum(k == key and info[k] == value for k in info)
+            else:
+                permit = 1
+
+            if permit and mode == 'pre-order':
+                list_result.append(info if with_additional_details else newick_node.name)
+
+            for i, child in enumerate(newick_node.children[::-1]) if reverse else enumerate(newick_node.children):
                 get_list(child)
+                if permit and mode == 'in-order' and i == 0:
+                    list_result.append(info if with_additional_details else newick_node.name)
+            if not newick_node.children:
+                if permit and mode == 'in-order':
+                    list_result.append(info if with_additional_details else newick_node.name)
+
+            if permit and mode == 'post-order':
+                list_result.append(info if with_additional_details else newick_node.name)
 
         get_list(node)
         return list_result
@@ -184,12 +241,10 @@ class Tree:
                 int_end = min([i for i in list_end if i > int_start]) + 1
                 list_end.pop(list_end.index(int_end - 1))
                 node_name = newick[int_end: min([x for x in [newick.find(':', int_end), newick.find(',', int_end),
-                                                             newick.find(';', int_end), newick.find(')', int_end)] if
-                                                 x >= 0])]
+                                                 newick.find(';', int_end), newick.find(')', int_end)] if x >= 0])]
                 distance_to_father = newick[int_end + len(node_name): min([x for x in [newick.find(',', int_end),
-                                                                                       newick.find(';', int_end),
-                                                                                       newick.find(')', int_end)] if
-                                                                           x >= 0])]
+                                                                          newick.find(';', int_end), newick.find(')',
+                                                                          int_end)] if x >= 0])]
 
                 (visibility, node_name) = (True, node_name) if node_name else (False, 'nd' + str(num()).rjust(4, '0'))
 

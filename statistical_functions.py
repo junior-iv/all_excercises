@@ -12,6 +12,7 @@ import numpy as np
 import os
 import random
 import array_functions as af
+from itertools import product
 
 from main import RESULT_DATA_PATH as RESULT_DATA_PATH
 from main import AMINO_ACIDS as AMINO_ACIDS
@@ -298,9 +299,9 @@ def get_replacement_statistic(replacement_statistic: List[Tuple[float, int, str,
             f'no_change_probabilities{name}': f'{no_change_probabilities:.5f}'}
 
 
-def __simulate_amino_acid_replacements_along_tree(newick_tree: Tree, probabilities: Tuple[np.ndarray, ...],
-                                                  aa_length: int = 1, starting_amino_acid: Optional[str] = None,
-                                                  name: str = '') -> Tuple[Union[str, float, int], ...]:
+def __simulate_amino_acid_replacements_along_tree(newick_tree: Tree, probabilities: Tuple[np.ndarray, ...], aa_length:
+                                                  int = 1, starting_amino_acid: Optional[str] = None) -> Tuple[Union[
+                                                   str, float, int], ...]:
     final_sequence: str = ''
     qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
 
@@ -471,84 +472,94 @@ def simulate_with_binary_jc(newick_text: str, variant: int = 1, final_sequence: 
     return result
 
 
-def __compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None, sequence_length: int = 1
-                                        ) -> float:
-    sequence_list = [final_sequence[i:i+sequence_length] for i in range(0, len(final_sequence), sequence_length)]
-    tree = Tree(newick_text)
-    list_nodes_info = tree.get_list_nodes_info(False, True)
-    nodes_number = tree.get_node_count('node') - tree.get_node_count('root')
-    # print(nodes_number)
-    # print(tree.get_node_count())
-    # print(tree.get_node_count('leaf'))
-    # print(tree.get_node_count('node'))
-    # print(tree.get_node_count('root'))
-    characters_number = len(BINARY)
-    options_number = characters_number ** nodes_number
-    print(options_number)
-    state_probability = 1 / characters_number
-    result = 0
-    state_frequency = (0.5, None)
+def find_dict_in_iterable(iterable: Union[List[Dict[str, Union[float, bool, str, List[float], Tuple[int, ...]]]], Tuple[
+                         Dict[str, Union[float, bool, str, List[float], Tuple[int, ...]]]]], key: str, value: Optional[
+                         Union[float, bool, str, List[float]]] = None) -> Dict[str, Union[float, bool, str,
+                                                                                          List[float]]]:
+    for index, dictionary in enumerate(iterable):
+        if key in dictionary and (True if value is None else dictionary[key] == value):
+            return dictionary
+
+
+def get_nodes_starting_values(list_nodes_info: List[Dict[str, Union[float, bool, str, List[float]]]], characters:
+                              List[str], answer: str) -> List[Dict[str, Tuple[int, ...]]]:
+    list_result = []
+    for number, i in enumerate(list(answer)):
+        states = []
+        for j in characters:
+            states.append(int(i == j))
+        list_result.append({list_nodes_info[number].get('node'): tuple(states)})
+
+    return list_result
+
+
+def get_cartesian_product(characters, node_count: int) -> List[Tuple[Union[float, int, str, bool, List[float]], ...]]:
+    return list(product(list(range(len(characters))), repeat=node_count))
+
+
+def get_vector(nodes_starting_values: List[Dict[str, Tuple[int, ...]]], node_starting_values: Dict[str, Tuple[int,
+               ...]], node_info: Dict[str, Union[float, bool, str, List[float], Tuple[int, ...]]]) -> Tuple[int, ...]:
+    starting_value = node_starting_values.get(node_info.get('node'))
+    father_name = node_info.get('father_name')
+    father_starting_value = find_dict_in_iterable(nodes_starting_values, father_name).get(father_name)
+    char_1 = [BINARY.index(BINARY[i]) for i, x in enumerate(father_starting_value) if int(x) > 0][0]
+    char_2 = [BINARY.index(BINARY[i]) for i, x in enumerate(starting_value) if x > 0][0]
+
+    return char_1, char_2
+
+
+def __compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None) -> Tuple[float,
+                                                                                                         str, str]:
+    newick_tree = Tree(newick_text)
+    nodes_info = newick_tree.get_list_nodes_info(False, True, 'pre-order', {'node_type': ['node', 'root']})
+    nodes_count = len(nodes_info)
+    cartesian_product = get_cartesian_product(BINARY, nodes_count)
+
+    leafs_info = newick_tree.get_list_nodes_info(False, True, 'pre-order', {'node_type': ['leaf']})
+    leafs_starting_values = get_nodes_starting_values(leafs_info, BINARY, final_sequence)
+
+    frequency = 1 / len(BINARY)
+    state_frequency = (frequency, None)
     qmatrix = af.get_one_parameter_qmatrix(*state_frequency)
-    sequence = ''
-    char = ''
-    list_completed_nodes = []
-    # completed_nodes_list
+    likelihood, formula, solution = 0, f'', f''
+    for iterable in cartesian_product:
+        repeat, repeat_f1, repeat_f2 = frequency, f'{frequency:.3f}', f'P({iterable[0]})'
+        answer = ''.join([BINARY[x] for x in iterable])
+        nodes_starting_values = get_nodes_starting_values(nodes_info, BINARY, answer)
+        for number, node_starting_values in enumerate(nodes_starting_values):
+            node_info = nodes_info[number]
+            father_info = find_dict_in_iterable(nodes_info, 'node', node_info.get('father_name'))
+            if father_info:
+                vector = get_vector(nodes_starting_values, node_starting_values, node_info)
+                pij = af.get_pij(qmatrix, node_info.get('distance'), vector)
+                repeat *= pij
+                repeat_f1 = f'{repeat_f1} * {pij:.4f}'
+                repeat_f2 = f'{repeat_f2} P<sub>{vector[0]}{vector[1]}</sub>({node_info.get("distance"):.3f})'
 
-    for _ in range(options_number):
-        step = state_probability
-        for node_info in list_nodes_info:
-            print(f'{node_info.get("node_type")}:\t\t{node_info}')
-        #         step *= af.get_pij(qmatrix, parameter[1], ij)
-        #
-        # result += step
-    # qmatrix = af.get_one_parameter_qmatrix(*state_frequency)
-    # pij = dict()
-    # for parameter in enumerate(parameters_p):
-    #     ij = (parameter[0] // 2, parameter[0] % 2)
-    #     pij.update({f'P<sub>{"".join(map(str, ij))}</sub>(<span class="text-success">{parameter[0]}</span>)':
-    #                 af.get_pij(qmatrix, parameter[1], ij)})
-    filters = ({'node_type': 'root'}, {'node_type': 'node'})
-    print(tree.get_node_count())
-    print(tree.get_node_count('root'))
-    print(tree.get_node_count('node'))
-    print(tree.get_node_count('leaf'))
-    print(tree.get_list_nodes_info(False, True))
-    print(tree.get_node_list(filters))
-    print(len(BINARY) ** tree.get_node_count())
-    print(1 / len(sequence_list[0]))
-    # * calculate_pij() * af.get_one_parameter_qmatrix(*state_frequency)
+        for number, leaf_starting_values in enumerate(leafs_starting_values):
+            leaf_info = leafs_info[number]
+            vector = get_vector(nodes_starting_values, leaf_starting_values, leaf_info)
+            pij = af.get_pij(qmatrix, leaf_info.get('distance'), vector)
+            repeat *= pij
+            repeat_f1 = f'{repeat_f1} * {pij:.4f}'
+            repeat_f2 = f'{repeat_f2} P<sub>{vector[0]}{vector[1]}</sub>({leaf_info.get("distance"):.3f})'
 
-    # def get_sequence(tree_node: Node) -> None:
-    #     nonlocal sequence, char
-    #     if tree_node.father:
-    #         char = simulate_sequence_jc(tree_node.distance_to_father, sequence_length, 3, char)[2]
-    #     else:
-    #         char = get_random_sequence(sequence_length, None, 3)
-    #
-    #     if tree_node.children:
-    #         for child in tree_node.children:
-    #             get_sequence(child)
-    #     else:
-    #         sequence += char
-    #
-    # get_sequence(tree.root)
+        likelihood += repeat
+        solution = f'{solution}<br>&emsp;&emsp;&emsp;&emsp;&nbsp; + {repeat_f1}' if solution else f'{repeat_f1}'
+        formula = f'{formula}<br>&emsp;&emsp;&emsp;&emsp;&nbsp; + {repeat_f2}' if formula else f'{repeat_f2}'
 
-    # dna_len = len(dna1)
-    # different_char = dna_len * get_sequences_difference(dna1, dna2)
-    # same_char = dna_len - different_char
-    # p_same, p_change = get_jukes_cantor_probabilities(branch_length)
-    #
-    # return (same_char * log(p_same, 10)) + (different_char * log(p_change, 10)) + (dna_len * log(0.25, 10))
-    return 0.0
+    return likelihood, formula, solution
 
 
-def compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None, sequence_length: int = 1
-                                      ) -> Dict[str, Union[str, float, int]]:
+def compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None) -> Dict[str, Union[str,
+                                                                                                      float, int]]:
     start_time = time()
     simulations_result = dict()
     if final_sequence:
-        likelihood = __compute_likelihood_with_binary_jc(newick_text, final_sequence, sequence_length)
-        simulations_result.update({'likelihood_of_the_data': likelihood})
+        likelihood = __compute_likelihood_with_binary_jc(newick_text, final_sequence)
+        simulations_result.update({'formula': likelihood[1]})
+        simulations_result.update({'solution': likelihood[2]})
+        simulations_result.update({'likelihood_of_the_data': likelihood[0]})
     else:
         simulations_result.update({'final_sequence': 'final sequence was entered incorrectly'})
 
@@ -595,7 +606,6 @@ def calculate_change_dna_length_statistics(repetition_count: int, low: int, dna_
     event_array = np.array(event_list)
     mean = np.mean(event_array)
     std = np.std(event_array)
-    # url = url_for("result_table", file_name=get_html_table_file_name(sequences_list, ("number", "count", "probability")))
 
     return {'execution_time': convert_seconds(time() - start_time),
             'average_deviation ': mean,
@@ -618,7 +628,6 @@ def calculate_event_simulation_statistics(repetition_count: int, low: int, dna_l
     first_position_quantity = sum(map(lambda x: 1 if x[1] <= 0 < x[2] else 0, sequences_list))
     middle_position_quantity = sum(map(lambda x: 1 if x[1] <= dna_length / 2 - 1 < x[2] else 0, sequences_list))
     last_position_quantity = sum(map(lambda x: 1 if x[1] <= dna_length - 1 < x[2] else 0, sequences_list))
-    # url = url_for("result_table", file_name=get_html_table_file_name(sequences_list, ("number", "count", "probability")))
 
     return {'execution_time': convert_seconds(time() - start_time),
             f'number_of_times_first_position_was_{event_name}': first_position_quantity,

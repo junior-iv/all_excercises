@@ -45,7 +45,7 @@ MENU = ({'name': 'Home page', 'url': 'index',
                      )
          },
         {'name': 'Exercise #8', 'url': '',
-         'submenu': ({'name': 'Task #1', 'url': 'exercise8task1'}, {'name': 'Task #2', 'url': 'exercise8task2'}
+         'submenu': ({'name': 'Task #1, #2, #3', 'url': 'exercise8task1'}, {'name': 'Task #2', 'url': 'exercise8task2'}
                      )
          }
         )
@@ -318,7 +318,7 @@ def exercise8task1():
     return render_template('exercise8task1.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
                            simulations_count=SIMULATIONS_COUNT[0], sequence=SEQUENCE[2],
                            title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of a single site '
-                                  'along a tree using the binary Jukes-Cantor model (Task #1, #2)'))
+                                  'along a tree using the binary Jukes-Cantor model (Task #1, #2, #3)'))
 
 
 @app.route('/exercise8task2', methods=['GET'])
