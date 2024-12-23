@@ -609,17 +609,23 @@ def get_transition(nodes_vectors: List[Dict[str, Tuple[int, ...]]], node_name: s
 # def
 
 
-def calculate_subtree_sum(newick_node: Node, qmatrix: np.ndarray, leaves_dict: Dict[str, Tuple[int, int]]):
+def calculate_felsensteins_likelihood(newick_node: Node, matrix: np.ndarray, leaves_dict: Dict[str, Tuple[int, int]]
+                                      ) -> Tuple[Union[Tuple[float, int], Tuple[int, float]], Union[float, int]]:
     if not newick_node.children:
-        return af.get_pij(qmatrix, newick_node.distance_to_father, leaves_dict.get(newick_node.name))
+        return (leaves_dict.get(newick_node.name), newick_node.distance_to_father)
 
-    left = calculate_subtree_sum(newick_node.children[0], qmatrix, leaves_dict)
-    right = calculate_subtree_sum(newick_node.children[1], qmatrix, leaves_dict)
+    le = calculate_felsensteins_likelihood(newick_node.children[0], matrix, leaves_dict)
+    ri = calculate_felsensteins_likelihood(newick_node.children[1], matrix, leaves_dict)
+
+    l_0 = ((af.get_pij(matrix, le[1], (0, 0)) * le[0][0] + af.get_pij(matrix, le[1], (0, 1)) * le[0][1]) *
+           (af.get_pij(matrix, ri[1], (0, 0)) * ri[0][0] + af.get_pij(matrix, ri[1], (0, 1)) * ri[0][1]))
+    l_1 = ((af.get_pij(matrix, le[1], (1, 0)) * le[0][0] + af.get_pij(matrix, le[1], (1, 1)) * le[0][1]) *
+                (af.get_pij(matrix, ri[1], (1, 0)) * ri[0][0] + af.get_pij(matrix, ri[1], (1, 1)) * ri[0][1]))
 
     if newick_node.father:
-        return left * right
+        return ((l_0, l_1), newick_node.distance_to_father)
     else:
-        return 1 / len(BINARY) * left + 1 / len(BINARY) * right
+        return 1 / len(BINARY) * l_0 + 1 / len(BINARY) * l_1
 
 
 def __compute_felsensteins_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None) -> Tuple[
@@ -637,7 +643,7 @@ def __compute_felsensteins_likelihood_with_binary_jc(newick_text: str, final_seq
     frequency = 1 / alphabet_size
     state_frequency = (frequency, None)
     qmatrix = af.get_one_parameter_qmatrix(*state_frequency)
-    likelihood = calculate_subtree_sum(newick_tree.root, qmatrix, leaves_dict)
+    likelihood = calculate_felsensteins_likelihood(newick_tree.root, qmatrix, leaves_dict)
 
     return likelihood
 
