@@ -115,10 +115,12 @@ BINARY = ('0', '1')
 CONTENT_AMINO_ACIDS = ''.join([f'<option value = "{i}" > {i} </option>\n' for i in AMINO_ACIDS[1]])
 SEQUENCE = ('AACGA', 'AACGT', '010')
 
-err = [f'{df.key_design("Incorrect text of newick format. <br>Example of correct text of newick format", True, 13)}<br>'
-       ,f'{df.key_design("The length of the final sequence must match the number of leaves", True, 13)}<br>']
+err = [f'{df.key_design("Incorrect text of newick format. <br>Example of correct text of newick format", True, 13)}',
+       f'{df.key_design("The length of the final sequence must match the number of leaves", True, 13)}',
+       f'{df.key_design("The tree is not correct. <br>The tree should be binary", True, 13)}']
 ERRORS = {'incorrect_newick': f'<b>{err[0]}{df.value_design(CONTENT_TEXTAREA[4], True, 14)}</b>',
-          'incorrect_sequence': f'<b>{err[1]}</b>',}
+          'incorrect_sequence': f'<b>{err[1]}</b>',
+          'incorrect_tree': f'<b>{err[2]}</b>'}
 
 @app.route('/')
 @app.route('/index', methods=['GET'])
@@ -558,6 +560,8 @@ def compute_felsensteins_likelihood_with_binary_jc():
             result = ERRORS.get('incorrect_newick')
         elif Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence):
             result = ERRORS.get('incorrect_sequence')
+        elif not Tree(newick_text).check_tree_for_binary():
+            result = ERRORS.get('incorrect_tree')
         else:
             statistics = sf.compute_felsensteins_likelihood_with_binary_jc(newick_text, final_sequence)
             result = df.result_design(statistics)

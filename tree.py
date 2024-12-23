@@ -288,6 +288,14 @@ class Tree:
             newick_node.father = father
             father.children.append(newick_node)
 
+    def check_tree_for_binary(self) -> bool:
+        nodes_list = self.root.list_nodes_info(False, True)
+        for newick_node in nodes_list:
+            for key in newick_node.keys():
+                if key == 'children' and len(newick_node.get(key)) > 2:
+                    return False
+        return True
+
     @staticmethod
     def check_newick(newick_text: str) -> bool:
         return newick_text.startswith('(') and newick_text[:-1].endswith(')') and newick_text.endswith(';')
