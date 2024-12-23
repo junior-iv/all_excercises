@@ -249,7 +249,7 @@ function lgToQMatrix() {
 function calculatePij() {
     const parameterName = document.getElementById('parameterName');
     const stateFrequency = document.getElementById('stateFrequency');
-    const parametersP = [document.getElementById('P00').value, document.getElementById('P01').value,
+    const parametersP= [document.getElementById('P00').value, document.getElementById('P01').value,
         document.getElementById('P10').value, document.getElementById('P11').value];
     const formData = new FormData();
     formData.append('parameterName', parameterName.value);
@@ -397,6 +397,31 @@ function simulateWithBinaryJC(variant = 1) {
         });
 }
 
+function computeFelsensteinsLikelihood() {
+    const textArea = document.getElementById('textArea');
+    const finalSequence = document.getElementById('finalSequence');
+    const formData = new FormData();
+    formData.append('textArea', textArea.value);
+    formData.append('finalSequence', finalSequence.value);
+
+    const loaderID = getLoader();
+    setVisibilityLoader(true, loaderID);
+
+    fetch('/compute_felsensteins_likelihood_with_binary_jc', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            setVisibilityLoader(false, loaderID);
+            showMessage(1, data.message)
+        })
+        .catch(error => {
+            setVisibilityLoader(false, loaderID);
+            console.error('Error:', error);
+            showMessage(3, error.message)
+        });
+}
 
 function computeLikelihoodWithBinaryJC() {
     const textArea = document.getElementById('textArea');

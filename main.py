@@ -45,7 +45,8 @@ MENU = ({'name': 'Home page', 'url': 'index',
                      )
          },
         {'name': 'Exercise #8', 'url': '',
-         'submenu': ({'name': 'Task #1, #2, #3', 'url': 'exercise8task1'}, {'name': 'Task #2', 'url': 'exercise8task2'}
+         'submenu': ({'name': 'Task #1, #2, #3, #4', 'url': 'exercise8task1'}, {'name': 'Task #2', 'url':
+                                                                                'exercise8task2'}
                      )
          }
         )
@@ -114,8 +115,10 @@ BINARY = ('0', '1')
 CONTENT_AMINO_ACIDS = ''.join([f'<option value = "{i}" > {i} </option>\n' for i in AMINO_ACIDS[1]])
 SEQUENCE = ('AACGA', 'AACGT', '010')
 
-err = f'{df.key_design("Incorrect text of newick format. <br>Example of correct text of newick format", True, 8)}<br>'
-ERRORS = {'incorrect_newick': f'<b>{err}{df.value_design(CONTENT_TEXTAREA[4], True, 6)}</b>'}
+err = [f'{df.key_design("Incorrect text of newick format. <br>Example of correct text of newick format", True, 13)}<br>'
+       ,f'{df.key_design("The length of the final sequence must match the number of leaves", True, 13)}<br>']
+ERRORS = {'incorrect_newick': f'<b>{err[0]}{df.value_design(CONTENT_TEXTAREA[4], True, 14)}</b>',
+          'incorrect_sequence': f'<b>{err[1]}</b>',}
 
 @app.route('/')
 @app.route('/index', methods=['GET'])
@@ -318,7 +321,7 @@ def exercise8task1():
     return render_template('exercise8task1.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
                            simulations_count=SIMULATIONS_COUNT[0], sequence=SEQUENCE[2],
                            title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of a single site '
-                                  'along a tree using the binary Jukes-Cantor model (Task #1, #2, #3)'))
+                                  'along a tree using the binary Jukes-Cantor model (Task #1, #2, #3, #4)'))
 
 
 @app.route('/exercise8task2', methods=['GET'])
@@ -534,11 +537,30 @@ def simulate_with_binary_jc():
         simulations_count = int(simulations_count) if simulations_count else 0
         variant = int(request.form.get('variant'))
 
-        if Tree.check_newick(newick_text):
+        if not Tree.check_newick(newick_text):
+            result = ERRORS.get('incorrect_newick')
+        elif Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence):
+            result = ERRORS.get('incorrect_sequence')
+        else:
             statistics = sf.simulate_with_binary_jc(newick_text, variant, final_sequence, simulations_count)
             result = df.result_design(statistics)
-        else:
+
+        return jsonify(message=result)
+
+
+@app.route('/compute_felsensteins_likelihood_with_binary_jc', methods=['POST'])
+def compute_felsensteins_likelihood_with_binary_jc():
+    if request.method == 'POST':
+        newick_text = request.form.get('textArea')
+        final_sequence = request.form.get('finalSequence')
+
+        if not Tree.check_newick(newick_text):
             result = ERRORS.get('incorrect_newick')
+        elif Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence):
+            result = ERRORS.get('incorrect_sequence')
+        else:
+            statistics = sf.compute_felsensteins_likelihood_with_binary_jc(newick_text, final_sequence)
+            result = df.result_design(statistics)
 
         return jsonify(message=result)
 
@@ -549,11 +571,13 @@ def compute_likelihood_with_binary_jc():
         newick_text = request.form.get('textArea')
         final_sequence = request.form.get('finalSequence')
 
-        if Tree.check_newick(newick_text):
+        if not Tree.check_newick(newick_text):
+            result = ERRORS.get('incorrect_newick')
+        elif Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence):
+            result = ERRORS.get('incorrect_sequence')
+        else:
             statistics = sf.compute_likelihood_with_binary_jc(newick_text, final_sequence)
             result = df.result_design(statistics)
-        else:
-            result = ERRORS.get('incorrect_newick')
 
         return jsonify(message=result)
 

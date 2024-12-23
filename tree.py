@@ -16,30 +16,29 @@ class Tree:
     def __str__(self) -> str:
         return self.get_newick()
 
-    def __eq__(self, other):
-        return self.get_newick() == other.get_newick()
+    def __len__(self) -> int:
+        return self.get_node_count()
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    def __eq__(self, other) -> bool:
+        return str(self).lower() == str(other).lower()
 
-    def __lt__(self, other):
-        return self.get_node_count() < other.get_node_count()
+    def __ne__(self, other) -> bool:
+        return not self == other
 
-    def __le__(self, other):
-        newick1 = self.get_newick()
-        newick2 = other.get_newick()
-        return self.get_node_count() < other.get_node_count() or newick1 == newick2 or len(newick1) < len(newick2)
+    def __lt__(self, other) -> bool:
+        return len(self) < len(other)
 
-    def __gt__(self, other):
-        return self.get_node_count() > other.get_node_count()
+    def __le__(self, other) -> bool:
+        return self < other or self == other or len(str(self)) < len(str(other))
 
-    def __ge__(self, other):
-        newick1 = self.get_newick()
-        newick2 = other.get_newick()
-        return self.get_node_count() > other.get_node_count() or newick1 == newick2 or len(newick1) > len(newick2)
+    def __gt__(self, other) -> bool:
+        return len(self) > len(other)
+
+    def __ge__(self, other) -> bool:
+        return self > other or self == other or len(str(self)) > len(str(other))
 
     def print_node_list(self, reverse: bool = False, with_additional_details: bool = False, mode: Optional[str] = None,
-                        filters: Optional[Dict[str, list[Union[float, int, str, list[float]]]]] = None) -> None:
+                        filters: Optional[Dict[str, List[Union[float, int, str, List[float]]]]] = None) -> None:
         """
         Print a list of nodes.
 
@@ -51,12 +50,12 @@ class Tree:
             reverse (bool, optional): If `True`, print the nodes in reverse order. If `False` (default),
                                       print the nodes in their natural order.
             with_additional_details (bool, optional): `False` (default)
-            mode (Optional[str]): `None` (default), 'pre-order', 'in-order', 'post-order'.
+            mode (Optional[str]): `None` (default), 'pre-order', 'in-order', 'post-order', 'level-order'.
             filters (Dict, optional):
         Returns:
             None: This function does not return any value; it only prints the nodes to the standard output.
         """
-        data_structure = self.list_nodes_info(self.root, reverse, with_additional_details, mode, filters)
+        data_structure = self.root.list_nodes_info(reverse, with_additional_details, mode, filters)
 
         str_result = ''
         for i in data_structure:
@@ -64,107 +63,25 @@ class Tree:
         print(str_result, '\n')
 
     def get_list_nodes_info(self, reverse: bool = False, with_additional_details: bool = False, mode: Optional[str] =
-                            None, filters: Optional[Dict[str, list[Union[float, int, str, list[float]]]]] = None
-                            ) -> List[Dict[str, Union[float, bool, str, list[float]]]]:
+                            None, filters: Optional[Dict[str, List[Union[float, int, str, List[float]]]]] = None
+                            ) -> List[Dict[str, Union[float, bool, str, List[float]]]]:
         """
         Args:
             reverse (bool, optional): If `True`, the resulting list of nodes will be in reverse order.
                                       If `False` (default), the nodes will be listed in their natural
                                       traversal order.
             with_additional_details (bool, optional): `False` (default).
-            mode (Optional[str]): `None` (default), 'pre-order', 'in-order', 'post-order'.
+            mode (Optional[str]): `None` (default), 'pre-order', 'in-order', 'post-order', 'level-order'.
             filters (Dict, optional):
         """
-        return self.list_nodes_info(self.root, reverse, with_additional_details, mode, filters)
+        return self.root.list_nodes_info(reverse, with_additional_details, mode, filters)
 
-    def get_node_count(self, filters: Optional[Dict[str, list[Union[float, int, str, list[float]]]]] = None) -> int:
+    def get_node_count(self, filters: Optional[Dict[str, List[Union[float, int, str, List[float]]]]] = None) -> int:
         """
         Args:
             filters (Dict, optional):
         """
         return len(self.get_list_nodes_info(False, True, None, filters))
-
-    @staticmethod
-    def add_nodes_info(permit: int, list_result: List[Dict[str, Union[float, bool, str]]], info: Dict[str,
-                       Union[float, bool, str, list[float]]]):
-        if permit:
-            list_result.append(info)
-
-    @staticmethod
-    def list_nodes_info(node: Node, reverse: bool = False, with_additional_details: bool = False, mode: Optional[str] =
-                        None, filters: Optional[Dict[str, list[Union[float, int, str, list[float]]]]] = None
-                        ) -> List[Dict[str, Union[float, bool, str, list[float]]]]:
-        """
-        Retrieve a list of descendant nodes from a given node, including the node itself or retrieve a list of
-        descendant nodes from the current instance of the `Tree` class.
-
-        This function collects all child nodes of the specified `node`, including the `node` itself, or collects all
-        child nodes of the current instance of the `Tree` class if `node` is not provided. The function
-        returns these nodes names as a list.
-
-        Args:
-            node (Node, optional): The node whose child nodes, along with itself, are to be collected. If not
-                            specified, collects all child nodes of the current instance are collected.
-            reverse (bool, optional): If `True`, the resulting list of nodes will be in reverse order.
-                                      If `False` (default), the nodes will be listed in their natural
-                                      traversal order.
-            with_additional_details (bool, optional): `False` (default).
-            mode (Optional[str]): `None` (default), 'pre-order', 'in-order', 'post-order'.
-            filters (Dict, optional):
-        Returns:
-            list: A list of nodes names including the specified `node` (or the current instance's nodes  names) and its
-                                    children. The list is ordered according to the `reverse` argument.
-        """
-        list_result = []
-        mode = 'pre-order' if mode is None or mode.lower() not in ('pre-order', 'in-order', 'post-order') else (
-            mode.lower())
-
-        def get_list(newick_node: Node) -> None:
-            nonlocal list_result
-            lavel = 1
-            full_distance = [newick_node.distance_to_father]
-            father = newick_node.father
-            if father:
-                father_name = father.name
-                node_type = 'node'
-                while father:
-                    full_distance.append(father.distance_to_father)
-                    lavel += 1
-                    father = father.father
-            else:
-                father_name = ''
-                node_type = 'root'
-
-            if not newick_node.children:
-                node_type = 'leaf'
-
-            info = {'node': newick_node.name, 'distance': full_distance[0],
-                    'lavel': lavel, 'node_type': node_type, 'father_name': father_name,
-                    'full_distance': full_distance}
-            if filters:
-                permit = 0
-                for key in filters.keys():
-                    for value in filters[key]:
-                        permit += sum(k == key and info[k] == value for k in info)
-            else:
-                permit = 1
-
-            if permit and mode == 'pre-order':
-                list_result.append(info if with_additional_details else newick_node.name)
-
-            for i, child in enumerate(newick_node.children[::-1]) if reverse else enumerate(newick_node.children):
-                get_list(child)
-                if permit and mode == 'in-order' and i == 0:
-                    list_result.append(info if with_additional_details else newick_node.name)
-            if not newick_node.children:
-                if permit and mode == 'in-order':
-                    list_result.append(info if with_additional_details else newick_node.name)
-
-            if permit and mode == 'post-order':
-                list_result.append(info if with_additional_details else newick_node.name)
-
-        get_list(node)
-        return list_result
 
     def get_newick(self, reverse: bool = False) -> str:
         """
@@ -184,7 +101,7 @@ class Tree:
         """
         return f'{Node.subtree_to_newick(self.root, reverse)};'
 
-    def find_node_by_name(self, name: str, node: Optional[Node] = None) -> bool:
+    def find_node_by_name(self, name: str, newick_node: Optional[Node] = None) -> bool:
         """
         Search for a node by its name in a tree structure.
 
@@ -195,17 +112,17 @@ class Tree:
         Args:
             name (str): The name of the node to search for. This should be the exact name of the node
                         as a string.
-            node (Node, optional): The node from which to start the search. If not provided,
+            newick_node (Node, optional): The node from which to start the search. If not provided,
                                         the search will start from the default root node of the tree.
 
         Returns:
             bool: `True` if a node with the specified name is found; `False` otherwise.
         """
-        node = self.root if node is None else node
-        if name == node.name:
+        newick_node = self.root if newick_node is None else newick_node
+        if name == newick_node.name:
             return True
         else:
-            for child in node.children:
+            for child in newick_node.children:
                 if self.find_node_by_name(name, child):
                     return True
         return False
@@ -261,14 +178,14 @@ class Tree:
                         list_children[j]['children'] + node_name, list_children[j]['node'])
             for dict_children in list_children:
                 if list_children.index(dict_children):
-                    node = self.__find_node_by_name(dict_children['node'])
-                    node = node if node else self.__set_node(
+                    newick_node = self.__find_node_by_name(dict_children['node'])
+                    newick_node = newick_node if newick_node else self.__set_node(
                         dict_children['node'] + dict_children['distance_to_father'], num)
                 else:
-                    node = self.__set_node(dict_children['node'] + dict_children['distance_to_father'], num)
-                    self.root = node
+                    newick_node = self.__set_node(dict_children['node'] + dict_children['distance_to_father'], num)
+                    self.root = newick_node
 
-                self.__set_children_list_from_string(dict_children['children'], node, num)
+                self.__set_children_list_from_string(dict_children['children'], newick_node, num)
             return self
 
     def get_html_tree(self, style: str = '', status: str = '') -> str:
@@ -280,11 +197,11 @@ class Tree:
         return self.subtree_to_structure(self.root, reverse)
 
     def add_distance_to_father(self, distance_to_father: float = 0) -> None:
-        def add_distance(node: Node) -> None:
+        def add_distance(newick_node: Node) -> None:
             nonlocal distance_to_father
-            node.distance_to_father += distance_to_father
-            node.distance_to_father = round(node.distance_to_father, 12)
-            for child in node.children:
+            newick_node.distance_to_father += distance_to_father
+            newick_node.distance_to_father = round(newick_node.distance_to_father, 12)
+            for child in newick_node.children:
                 add_distance(child)
 
         add_distance(self.root)
@@ -292,11 +209,11 @@ class Tree:
     def get_edges_list(self, reverse: bool = False) -> List[str]:
         list_result = []
 
-        def get_list(node: Node) -> None:
+        def get_list(newick_node: Node) -> None:
             nonlocal list_result
-            if node.father:
-                list_result.append((node.father.name, node.name))
-            for child in node.children[::-1] if reverse else node.children:
+            if newick_node.father:
+                list_result.append((newick_node.father.name, newick_node.name))
+            for child in newick_node.children[::-1] if reverse else newick_node.children:
                 get_list(child)
 
         get_list(self.root)
@@ -321,14 +238,14 @@ class Tree:
         tree1 = Tree(tree1) if type(tree1) is str else tree1
         tree2 = Tree(tree2) if type(tree2) is str else tree2
 
-        edges_list1 = sorted(Tree.get_edges_list(tree1), key=lambda item: item[1])
-        edges_list2 = sorted(Tree.get_edges_list(tree2), key=lambda item: item[1])
+        edges_list1 = sorted(tree1.get_edges_list(), key=lambda item: item[1])
+        edges_list2 = sorted(tree2.get_edges_list(), key=lambda item: item[1])
 
         distance = 0
-        for node in edges_list1:
-            distance += 0 if edges_list2.count(node) else 1
-        for node in edges_list2:
-            distance += 0 if edges_list1.count(node) else 1
+        for newick_node in edges_list1:
+            distance += 0 if edges_list2.count(newick_node) else 1
+        for newick_node in edges_list2:
+            distance += 0 if edges_list1.count(newick_node) else 1
 
         return distance / 2
 
@@ -339,26 +256,26 @@ class Tree:
                 f'{cls.__get_html_tree(structure, status)}</ul>')
 
     @classmethod
-    def subtree_to_structure(cls, node: Node, reverse: bool = False) -> dict:
+    def subtree_to_structure(cls, newick_node: Node, reverse: bool = False) -> dict:
         """This method is for internal use only."""
-        dict_node = {'name': node.name.strip(), 'distance_to_father': node.distance_to_father}
+        dict_node = {'name': newick_node.name.strip(), 'distance_to_father': newick_node.distance_to_father}
         list_children = []
-        if node.children:
-            for child in node.children[::-1] if reverse else node.children:
+        if newick_node.children:
+            for child in newick_node.children[::-1] if reverse else newick_node.children:
                 list_children.append(cls.subtree_to_structure(child, reverse))
         dict_node.update({'children': list_children})
         return dict_node
 
-    def __find_node_by_name(self, name: str, node: Optional[Node] = None) -> Optional[Node]:
+    def __find_node_by_name(self, name: str, newick_node: Optional[Node] = None) -> Optional[Node]:
         """This method is for internal use only."""
-        node = self.root if node is None else node
-        if name == node.name:
-            return node
+        newick_node = self.root if newick_node is None else newick_node
+        if name == newick_node.name:
+            return newick_node
         else:
-            for child in node.children:
-                node = self.__find_node_by_name(name, child)
-                if node:
-                    return node
+            for child in newick_node.children:
+                newick_node = self.__find_node_by_name(name, child)
+                if newick_node:
+                    return newick_node
         return None
 
     def __set_children_list_from_string(self, str_children: str, father: Optional[Node], num) -> None:  # List[Node]:
@@ -367,9 +284,9 @@ class Tree:
             ')') else str_children
         lst_nodes = str_children.split(',')
         for str_node in lst_nodes:
-            node = self.__set_node(str_node.strip(), num)
-            node.father = father
-            father.children.append(node)
+            newick_node = self.__set_node(str_node.strip(), num)
+            newick_node.father = father
+            father.children.append(newick_node)
 
     @staticmethod
     def check_newick(newick_text: str) -> bool:
@@ -388,9 +305,9 @@ class Tree:
         else:
             node_data = [node_str if node_str else 'nd' + str(num()).rjust(4, '0'), 0.0]
 
-        node = Node(node_data[0])
-        node.distance_to_father = float(node_data[1])
-        return node
+        newick_node = Node(node_data[0])
+        newick_node.distance_to_father = float(node_data[1])
+        return newick_node
 
     @staticmethod
     def __counter():
