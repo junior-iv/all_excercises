@@ -665,9 +665,9 @@ def get_amino_acid_replacement_frequencies(amino_acid1: str, amino_acid2: str, r
 
 
 def __compute_amino_acids_likelihood(newick_text: str, final_sequence:
-                                     Optional[str] = None) -> float:
+                                     Optional[str] = None) -> Tuple[float, ...]:
     alphabet = AMINO_ACIDS[0]
-    # alphabet = ['0', '1', '2']
+    # alphabet = tuple(['0', '1', '2'])
     # qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
     newick_tree = Tree(newick_text)
     alphabet_size = len(alphabet)
@@ -681,6 +681,7 @@ def __compute_amino_acids_likelihood(newick_text: str, final_sequence:
 
     len_seq = len(list(sequence_dict.values())[0])
     likelihood = 1
+    log_likelihood = 0
     for i_char in range(len_seq):
         leaves_dict = dict()
         for i in range(len(leaves_info)):
@@ -689,17 +690,21 @@ def __compute_amino_acids_likelihood(newick_text: str, final_sequence:
             frequency = [0] * alphabet_size
             frequency[alphabet.index(sequence)] = 1
             leaves_dict.update({node_name: tuple(frequency)})
-        likelihood *= calculate_felsensteins_likelihood_for_amino_acids(newick_tree.root, leaves_dict, alphabet)
-    return likelihood
+        char_likelihood = calculate_felsensteins_likelihood_for_amino_acids(newick_tree.root, leaves_dict, alphabet)
+        likelihood *= char_likelihood
+        log_likelihood += log(char_likelihood)
+
+    return likelihood, log_likelihood
 
 
 def compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[str] = None) -> Dict[str, Union[str,
                                                                                                    float, int]]:
     start_time = time()
-    likelihood = __compute_amino_acids_likelihood(newick_text, final_sequence)
+    likelihood, log_likelihood = __compute_amino_acids_likelihood(newick_text, final_sequence)
 
     result = {'execution_time': convert_seconds(time() - start_time)}
-    result.update({'likelihood_of_the_data': likelihood})
+    result.update({'likelihood_of_the_tree': likelihood})
+    result.update({'log_likelihood_of_the_tree': log_likelihood})
 
     return result
 

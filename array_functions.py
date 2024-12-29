@@ -49,6 +49,7 @@ def get_html_table(data_array: List[List[Union[None, str, int, float]]], header_
 def get_jukes_cantor_probabilities_amino_acids_matrix(branch_length, alphabet_size) -> np.ndarray:
     qmatrix = np.ones((alphabet_size, alphabet_size))
     np.fill_diagonal(qmatrix, 1 - alphabet_size)
+    qmatrix = qmatrix * 1 / (alphabet_size - 1)
     return expm(qmatrix * branch_length)
 
 
