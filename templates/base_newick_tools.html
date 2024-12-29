@@ -76,7 +76,7 @@
 
 
 {%- macro newick_tool(content_textarea='', data_name='newick tree', accept='.tree,.treefile,.txt', rows=16) -%}
-            <label for="textArea">paste the {{data_name}} into a text field or upload {{data_name}} from file</label>
+            <label for="textArea">please provide {{data_name}} into a text field or upload {{data_name}} from file</label>
             <div class="gap-2 d-flex flex-row w-100">
                 <div class="w-80">
                     <input id="newickFile" name="newickFile" type="file" accept="{{accept}}"
@@ -91,7 +91,7 @@
                     </div>
                 </div>
             </div>
-            <textarea spellcheck="false" placeholder="paste the {{data_name}} here" id="textArea" name="textArea" autocomplete="on"
+            <textarea spellcheck="false" placeholder="please provide {{data_name}} here" id="textArea" name="textArea" autocomplete="on"
                       rows="{{rows}}" class="form-control-sm h-75">{{content_textarea}}</textarea>
 {%- endmacro -%}
 

@@ -101,7 +101,7 @@ class Tree:
         """
         return f'{Node.subtree_to_newick(self.root, reverse)};'
 
-    def find_node_by_name(self, name: str, newick_node: Optional[Node] = None) -> bool:
+    def find_node_by_name(self, name: str) -> bool:
         """
         Search for a node by its name in a tree structure.
 
@@ -112,20 +112,12 @@ class Tree:
         Args:
             name (str): The name of the node to search for. This should be the exact name of the node
                         as a string.
-            newick_node (Node, optional): The node from which to start the search. If not provided,
-                                        the search will start from the default root node of the tree.
 
         Returns:
             bool: `True` if a node with the specified name is found; `False` otherwise.
         """
-        newick_node = self.root if newick_node is None else newick_node
-        if name == newick_node.name:
-            return True
-        else:
-            for child in newick_node.children:
-                if self.find_node_by_name(name, child):
-                    return True
-        return False
+
+        return name in self.root.list_nodes_info()
 
     def newick_to_tree(self, newick: str) -> Optional['Tree']:
         """
@@ -298,13 +290,14 @@ class Tree:
 
     @staticmethod
     def check_newick(newick_text: str) -> bool:
-        return newick_text.startswith('(') and newick_text[:-1].endswith(')') and newick_text.endswith(';')
+        return (newick_text and newick_text.startswith('(') and newick_text[:-1].endswith(')') and
+                newick_text.endswith(';'))
 
     @staticmethod
     def __set_node(node_str: str, num) -> Node:
         """This method is for internal use only."""
         if node_str.find(':') > -1:
-            node_data = node_str.split(':')
+            node_data: List[Union[str, int, float]] = node_str.split(':')
             node_data[0] = node_data[0] if node_data[0] else 'nd' + str(num()).rjust(4, '0')
             try:
                 node_data[1] = float(node_data[1])

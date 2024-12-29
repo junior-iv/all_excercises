@@ -1,14 +1,14 @@
-from flask import Flask, request, render_template, url_for, flash, jsonify
-# from typing import List, Any, Union, Tuple, Optional
-from tree import Tree
 import array_functions as af
 import statistical_functions as sf
 import design_functions as df
-import os
+
+from flask import Flask, request, render_template, url_for, flash, jsonify
+from tree import Tree
+from os import getenv
 
 app = Flask(__name__)
 app.config.update(MAX_CONTENT_LENGTH=16 * 1024 * 1024,
-                  SECRET_KEY=os.getenv('SECRET_KEY'),
+                  SECRET_KEY=getenv('SECRET_KEY'),
                   DEBUG=True)
 
 MENU = ({'name': 'Home page', 'url': 'index',
@@ -45,8 +45,8 @@ MENU = ({'name': 'Home page', 'url': 'index',
                      )
          },
         {'name': 'Exercise #8', 'url': '',
-         'submenu': ({'name': 'Task #1, #2, #3, #4', 'url': 'exercise8task1'}, {'name': 'Task #2', 'url':
-                                                                                'exercise8task2'}
+         'submenu': ({'name': 'Task #1, #2, #3, #4', 'url': 'exercise8task1'}, {'name': 'Task #5', 'url':
+                                                                                'exercise8task5'}
                      )
          }
         )
@@ -89,7 +89,8 @@ CONTENT_TEXTAREA = ('((e:11.0,(a:8.5,b:8.5):2.5):5.5,(c:14.0,d:14.0):2.5);',
                     '0.079066 0.055941 0.041977 0.053052 0.012937 0.040767 0.071586 0.057337 0.022355 0.062157 '
                     '0.099081 0.064600 0.022951 0.042302 0.044040 0.061197 0.053287 0.012066 0.034155 0.069147',
                     '(s1:0.2,s2:0.3,s3:0.4);',
-                    '((S1:0.3,S2:0.15):0.1,S3:0.4);')
+                    '((S1:0.3,S2:0.15):0.1,S3:0.4);',
+                    '(((Langur:0.081,Baboon:0.033):0.021,Human:0.064):0.01,(Cow:0.240,Horse:0.63):0.106);')
 
 DNA_LENGTH = (100, 'AGCTC', 1000, 11, 1)
 AA_LENGTH = (1, 11)
@@ -113,14 +114,35 @@ AMINO_ACIDS = (('A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M',
 DNA = ('A', 'C', 'G', 'T')
 BINARY = ('0', '1')
 CONTENT_AMINO_ACIDS = ''.join([f'<option value = "{i}" > {i} </option>\n' for i in AMINO_ACIDS[1]])
-SEQUENCE = ('AACGA', 'AACGT', '010')
+SEQUENCE = ('AACGA', 'AACGT', '010',
+            '>Langur\n'
+            'KIFERCELARTLKKLGLDGYKGVSLANWVCLAKWESGYNTEATNYNPGDESTDYGIFQINSRYWCNNGKPGAVDACHISCSALLQNNIADAVACAKRVVSDQGIRA'
+            'WVAWRNHCQNKDVSQYVKGCGV\n'
+            '>Baboon\n'
+            'KIFERCELARTLKRLGLDGYRGISLANWVCLAKWESDYNTQATNYNPGDQSTDYGIFQINSHYWCNDGKPGAVNACHISCNALLQDNITDAVACAKRVVSDQGIRA'
+            'WVAWRNHCQNRDVSQYVQGCGV\n'
+            '>Human\n'
+            'KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQINSRYWCNDGKPGAVNACHLSCSALLQDNIADAVACAKRVVRDQGIRA'
+            'WVAWRNRCQNRDVRQYVQGCGV\n'
+            # '>Rat\n'
+            # 'KTYERCEFARTLKRNGMSGYYGVSLADWVCLAQHESNYNTQARNYDPGDQSTDYGIFQINSRYWCNDGKPRAKNACGIPCSALLQDDITQAIQCAKRVVRDQGIRA'
+            # 'WVAWQRHCKNRDLSGYIRNCGV\n'
+            '>Cow\n'
+            'KVFERCELARTLKKLGLDGYKGVSLANWLCLTKWESSYNTKATNYNPSSESTDYGIFQINSKWWCNDGKPNAVDGCHVSCSELMENDIAKAVACAKKIVSEQGITA'
+            'WVAWKSHCRDHDVSSYVEGCTL\n'
+            '>Horse\n'
+            'KVFSKCELAHKLKAQEMDGFGGYSLANWVCMAEYESNFNTRAFNGKNANGSSDYGLFQLNNKWWCKDNKRSSSNACNIMCSKLLDENIDDDISCAKRVVRDKGMSA'
+            'WKAWVKHCKDKDLSEYLASCNL')
 
 err = [f'{df.key_design("Incorrect text of newick format. <br>Example of correct text of newick format", True, 13)}',
        f'{df.key_design("The length of the final sequence must match the number of leaves", True, 13)}',
-       f'{df.key_design("The tree is not correct. <br>The tree should be binary", True, 13)}']
+       f'{df.key_design("The tree is not correct. <br>The tree should be binary", True, 13)}',
+       f'{df.key_design("Incorrect Le and Gascuel matrix", True, 13)}']
 ERRORS = {'incorrect_newick': f'<b>{err[0]}{df.value_design(CONTENT_TEXTAREA[4], True, 14)}</b>',
           'incorrect_sequence': f'<b>{err[1]}</b>',
-          'incorrect_tree': f'<b>{err[2]}</b>'}
+          'incorrect_tree': f'<b>{err[2]}</b>',
+          'incorrect_lg_matrix': f'<b>{err[3]}</b>'}
+
 
 @app.route('/')
 @app.route('/index', methods=['GET'])
@@ -235,8 +257,8 @@ def exercise4task6():
 @app.route('/exercise5task1', methods=['GET'])
 def exercise5task1():
     return render_template('exercise5task1.html', content_textarea=CONTENT_TEXTAREA[2], menu=MENU,
-                           title=(' - Exercise #5 simulating with the LG matrix:', ' reads the file LG.txt into a Q '
-                                  'matrix (Task #1)'))
+                           title=(' - Exercise #5 simulating with Le and Gascuel matrix:', ' reads the file LG.txt into'
+                                  ' Q matrix (Task #1)'))
 
 
 @app.route('/exercise5task2', methods=['GET'])
@@ -244,16 +266,16 @@ def exercise5task2():
     return render_template('exercise5task2.html', content_textarea=CONTENT_TEXTAREA[2],
                            simulations_count=SIMULATIONS_COUNT[1], branch_length=BRANCH_LENGTH[0],
                            aa_length=AA_LENGTH[0], content_amino_acids=CONTENT_AMINO_ACIDS, menu=MENU,
-                           title=(' - Exercise #5 simulating with the LG matrix:', ' simulator of the amino acid '
-                                  'replacements using the LG matrix (Task #2)'))
+                           title=(' - Exercise #5 simulating with Le and Gascuel matrix:', ' simulator of the amino '
+                                  'acid replacements using Le and Gascuel matrix (Task #2)'))
 
 
 @app.route('/exercise5task3', methods=['GET'])
 def exercise5task3():
     return render_template('exercise5task3.html', content_textarea=CONTENT_TEXTAREA,
                            simulations_count=SIMULATIONS_COUNT[0], aa_length=AA_LENGTH[0], menu=MENU,
-                           title=(' - Exercise #5 simulating with the LG matrix:', ' simulator of the amino acid '
-                                  'replacements using the LG matrix, along the tree (Task #3)'))
+                           title=(' - Exercise #5 simulating with Le and Gascuel matrix:', ' simulator of the amino '
+                                  'acid replacements using Le and Gascuel matrix, along the tree (Task #3)'))
 
 
 @app.route('/exercise6task1', methods=['GET'])
@@ -322,40 +344,17 @@ def exercise7task4():
 def exercise8task1():
     return render_template('exercise8task1.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
                            simulations_count=SIMULATIONS_COUNT[0], sequence=SEQUENCE[2],
-                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of a single site '
+                           title=(' - Exercise #8 computing likelihood of a tree:', ' simulator of a single site '
                                   'along a tree using the binary Jukes-Cantor model (Task #1, #2, #3, #4)'))
-
-
-@app.route('/exercise8task2', methods=['GET'])
-def exercise8task2():
-    return render_template('exercise8task2.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
-                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of log-likelihood '
-                                  'calculations on data using a single site along the tree with the binary '
-                                  'Jukes-Cantor model (Task #2)'))
-
-
-@app.route('/exercise8task3', methods=['GET'])
-def exercise8task3():
-    return render_template('exercise8task3.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
-                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of log-likelihood '
-                                  'calculations on data using a single site along the tree with the binary '
-                                  'Jukes-Cantor model (Task #3)'))
-
-
-@app.route('/exercise8task4', methods=['GET'])
-def exercise8task4():
-    return render_template('exercise8task4.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
-                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of log-likelihood '
-                                  'calculations on data using a single site along the tree with the binary '
-                                  'Jukes-Cantor model (Task #4)'))
 
 
 @app.route('/exercise8task5', methods=['GET'])
 def exercise8task5():
-    return render_template('exercise8task5.html', menu=MENU, content_textarea=CONTENT_TEXTAREA[4],
-                           title=(' - Exercise #8 computing log-likelihood of a tree:', ' simulator of log-likelihood '
-                                  'calculations on data using a single site along the tree with the binary '
-                                  'Jukes-Cantor model (Task #5)'))
+    return render_template('exercise8task5.html', menu=MENU, content_textarea=CONTENT_TEXTAREA,
+                           sequence=SEQUENCE[3],
+                           title=(' - Exercise #8 computing likelihood of a tree:', ' simulator of log-likelihood '
+                                  'calculations likelihood along the tree using Le and Gascuel matrix, along the tree '
+                                                                                    '(Task #5)'))
 
 
 @app.route('/check_name', methods=['POST'])
@@ -365,8 +364,10 @@ def check_name():
 
         if text_name:
             result = text_name.find('A') > -1 or text_name.find('a') > -1
+        else:
+            result = False
 
-            return jsonify(message=result)
+        return jsonify(message=result)
 
 
 @app.route('/clustering', methods=['GET'])
@@ -394,7 +395,7 @@ def get_robinson_foulds_distance():
     if request.method == 'POST':
         newick_text1 = request.form.get('newickText1')
         newick_text2 = request.form.get('newickText2')
-        if Tree.check_newick(newick_text1) and Tree.check_newick(newick_text1):
+        if Tree.check_newick(newick_text1) and Tree.check_newick(newick_text2):
             result = Tree.get_robinson_foulds_distance(newick_text1, newick_text2)
         else:
             result = ERRORS.get('incorrect_newick')
@@ -505,9 +506,16 @@ def simulate_amino_acid_replacements_along_tree():
         simulations_count = int(request.form.get('simulationsCount'))
 
         if Tree.check_newick(newick_text):
-            statistics = sf.simulate_amino_acid_replacements_along_tree(lg_text, newick_text, simulations_count,
-                                                                        aa_length)
-            result = df.result_design(statistics)
+            try:
+                qmatrix = af.lq_to_qmatrix(f' \n{lg_text.strip()}')
+            except ValueError:
+                result = ERRORS.get('incorrect_lg_matrix')
+            except IndexError:
+                result = ERRORS.get('incorrect_lg_matrix')
+            else:
+                statistics = sf.simulate_amino_acid_replacements_along_tree(qmatrix, newick_text, simulations_count,
+                                                                            aa_length)
+                result = df.result_design(statistics)
         else:
             result = ERRORS.get('incorrect_newick')
 
@@ -523,9 +531,16 @@ def simulate_amino_acid_replacements_by_lg():
         branch_length = float(request.form.get('branchLength'))
         simulations_count = int(request.form.get('simulationsCount'))
 
-        statistics = sf.simulate_amino_acid_replacements_by_lg(af.lq_to_qmatrix(lg_text), branch_length,
-                                                               simulations_count, aa_length, starting_amino_acid)
-        result = df.result_design(statistics)
+        try:
+            qmatrix = af.lq_to_qmatrix(f' \n{lg_text.strip()}')
+        except ValueError:
+            result = ERRORS.get('incorrect_lg_matrix')
+        except IndexError:
+            result = ERRORS.get('incorrect_lg_matrix')
+        else:
+            statistics = sf.simulate_amino_acid_replacements_by_lg(qmatrix, branch_length, simulations_count, aa_length,
+                                                                   starting_amino_acid)
+            result = df.result_design(statistics)
 
         return jsonify(message=result)
 
@@ -543,9 +558,39 @@ def simulate_with_binary_jc():
             result = ERRORS.get('incorrect_newick')
         elif Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence):
             result = ERRORS.get('incorrect_sequence')
+        elif not Tree(newick_text).check_tree_for_binary():
+            result = ERRORS.get('incorrect_tree')
         else:
             statistics = sf.simulate_with_binary_jc(newick_text, variant, final_sequence, simulations_count)
             result = df.result_design(statistics)
+
+        return jsonify(message=result)
+
+
+@app.route('/compute_amino_acids_likelihood', methods=['POST'])
+def compute_amino_acids_likelihood():
+    if request.method == 'POST':
+        lg_text = request.form.get('textArea')
+        newick_text = request.form.get('newickText')
+        final_sequence = request.form.get('finalSequence')
+
+        try:
+            qmatrix = af.lq_to_qmatrix(f' \n{lg_text.strip()}')
+        except ValueError:
+            result = ERRORS.get('incorrect_lg_matrix')
+        except IndexError:
+            result = ERRORS.get('incorrect_lg_matrix')
+        else:
+            if not Tree.check_newick(newick_text):
+                result = ERRORS.get('incorrect_newick')
+            elif (Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence.split('\n')) / 2 !=
+                  final_sequence.count('>')):
+                result = ERRORS.get('incorrect_sequence')
+            elif not Tree(newick_text).check_tree_for_binary():
+                result = ERRORS.get('incorrect_tree')
+            else:
+                statistics = sf.compute_amino_acids_likelihood(qmatrix, newick_text, final_sequence)
+                result = df.result_design(statistics)
 
         return jsonify(message=result)
 
@@ -579,6 +624,8 @@ def compute_likelihood_with_binary_jc():
             result = ERRORS.get('incorrect_newick')
         elif Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence):
             result = ERRORS.get('incorrect_sequence')
+        elif not Tree(newick_text).check_tree_for_binary():
+            result = ERRORS.get('incorrect_tree')
         else:
             statistics = sf.compute_likelihood_with_binary_jc(newick_text, final_sequence)
             result = df.result_design(statistics)
@@ -602,14 +649,20 @@ def get_one_parameter_qmatrix():
 @app.route('/lq_to_qmatrix', methods=['POST'])
 def lq_to_qmatrix():
     if request.method == 'POST':
-        lg_text = request.form.get('textArea')
-
-        result = (f'<details><summary>qmatrix before normalization</summary>\n'
-                  f'{af.get_html_table(af.set_names_to_array(af.lq_to_qmatrix(lg_text)[0].tolist(), AMINO_ACIDS[1]))}\n'
-                  f'</details>\n'
-                  f'<details><summary>qmatrix after normalization</summary>\n'
-                  f'{af.get_html_table(af.set_names_to_array(af.lq_to_qmatrix(lg_text)[1].tolist(), AMINO_ACIDS[1]))}\n'
-                  f'</details>\n')
+        try:
+            lg_text = request.form.get('textArea')
+            qmatrix = af.lq_to_qmatrix(f' \n{lg_text.strip()}')
+        except ValueError:
+            result = ERRORS.get('incorrect_lg_matrix')
+        except IndexError:
+            result = ERRORS.get('incorrect_lg_matrix')
+        else:
+            result = (f'<details><summary>qmatrix before normalization</summary>\n'
+                      f'{af.get_html_table(af.set_names_to_array(qmatrix[0].tolist(), AMINO_ACIDS[1]))}\n'
+                      f'</details>\n'
+                      f'<details><summary>qmatrix after normalization</summary>\n'
+                      f'{af.get_html_table(af.set_names_to_array(qmatrix[1].tolist(), AMINO_ACIDS[1]))}\n'
+                      f'</details>\n')
 
         return jsonify(message=result)
 
@@ -731,12 +784,14 @@ def find_node():
         newick_text = request.form.get('newickText')
         node_name = request.form.get('nodeName')
 
-        try:
-            if newick_text:
-                tree = Tree(newick_text)
-                return jsonify(message=tree.find_node_by_name(node_name))
-        except Exception:
-            return jsonify(message=ERRORS.get('incorrect_newick'))
+        if not Tree.check_newick(newick_text):
+            # result = ERRORS.get('incorrect_newick')
+            result = False
+        else:
+            tree = Tree(newick_text)
+            result = tree.find_node_by_name(node_name)
+
+        return jsonify(message=result)
 
 
 @app.route('/print_tree', methods=['POST'])
@@ -744,15 +799,14 @@ def print_tree():
     if request.method == 'POST':
         newick_text = request.form.get('newickText')
         status = request.form.get('status')
-        try:
-            html_result = ''
-            if newick_text:
-                tree = Tree(newick_text)
-                html_result = tree.get_html_tree(('tree-padding tree-vertical-lines tree-horizontal-lines '
-                                                  'tree-summaries tree-markers tree-buttons'), status)
-            return jsonify(message=html_result)
-        except Exception:
-            return jsonify(message=ERRORS.get('incorrect_newick'))
+        if not Tree.check_newick(newick_text):
+            result = ERRORS.get('incorrect_newick')
+        else:
+            tree = Tree(newick_text)
+            result = tree.get_html_tree(('tree-padding tree-vertical-lines tree-horizontal-lines '
+                                         'tree-summaries tree-markers tree-buttons'), status)
+
+        return jsonify(message=result)
 
 
 @app.route('/change_distance_to_father', methods=['POST'])
@@ -760,14 +814,14 @@ def change_distance_to_father():
     if request.method == 'POST':
         newick_text = request.form.get('newickText')
         distance_to_father = float(request.form.get('distanceToFather'))
-        if newick_text:
-            try:
-                tree = Tree(newick_text)
-                tree.add_distance_to_father(distance_to_father)
-                newick_text = tree.get_newick()
-                return jsonify(message=newick_text)
-            except Exception:
-                return jsonify(message=ERRORS.get('incorrect_newick'))
+        if not Tree.check_newick(newick_text):
+            result = ERRORS.get('incorrect_newick')
+        else:
+            tree = Tree(newick_text)
+            tree.add_distance_to_father(distance_to_father)
+            result = tree.get_newick()
+
+        return jsonify(message=result)
 
 
 if __name__ == '__main__':

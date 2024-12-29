@@ -1,6 +1,7 @@
 from typing import List, Union, Tuple, Optional
 import numpy as np
 from tree import Tree, Node
+from scipy.linalg import expm
 
 COMPARISON_TYPES = {'equal': 0, 'less': 1, 'more': 2}
 
@@ -9,11 +10,11 @@ def set_names_to_array(data_array: List[List[Union[int, float]]], row_col_names:
                        Tuple[str, ...]] = None) -> List[List[Union[None, str, int, float]]]:
     row_col_names = get_name(row_col_names)
     size = len(data_array[0])
-    result_array: List[List[Union[None, str, int, float]]] = [0] * (size + 1)
-    result_array[0] = [None] + [next(row_col_names) for _ in range(size)]
-
+    result_array: List[List[Union[None, str, int, float]]] = ([[None] + [next(row_col_names) for _ in range(size)]] +
+                                                              [0] * size)
     for i in range(size):
         result_array[i + 1] = [result_array[0][i + 1]] + data_array[i]
+
     return result_array
 
 
@@ -41,7 +42,14 @@ def get_html_table(data_array: List[List[Union[None, str, int, float]]], header_
                                f'{val if val else ""}</th>\n')
         str_result += '</tr>\n'
     str_result += '</table>'
+
     return str_result
+
+
+def get_jukes_cantor_probabilities_amino_acids_matrix(branch_length, alphabet_size) -> np.ndarray:
+    qmatrix = np.ones((alphabet_size, alphabet_size))
+    np.fill_diagonal(qmatrix, 1 - alphabet_size)
+    return expm(qmatrix * branch_length)
 
 
 def get_pij(qmatrix: np.ndarray, p_time: float, ij: Tuple[int, ...]) -> np.ndarray:
@@ -66,6 +74,25 @@ def get_one_parameter_qmatrix(p0: Optional[float], p1: Optional[float]) -> np.nd
     qmatrix[0, 1] = 1 / (2 * (1 - p1))
     qmatrix[1, 0] = 1 / (2 * p1)
     qmatrix[1, 1] = - 1 / (2 * p1)
+
+    return qmatrix
+
+
+def get_twenty_parameter_qmatrix(p0: Optional[float], p1: Optional[float]) -> np.ndarray:
+    qmatrix = np.zeros((20, 20), dtype='float32')
+    p1 = p1 if p1 else 1 - p0
+    # np.tri(20,20, k=1)
+    #
+    for i in range(20):
+        for j in range(20):
+            if i < j:
+                qmatrix[i, j] = 1 / (20 * (1 - p1))
+            elif i > j:
+                qmatrix[i, j] = 1 / (2 * p1)
+    # qmatrix[0, 0] = - 1 / (2 * (1 - p1))
+    # qmatrix[0, 1] = 1 / (2 * (1 - p1))
+    # qmatrix[1, 0] = 1 / (2 * p1)
+    # qmatrix[1, 1] = - 1 / (2 * p1)
 
     return qmatrix
 
@@ -106,7 +133,8 @@ def get_min(data_array: np.ndarray) -> float:
 
 def join_array(data_array: List[np.ndarray], min_indexes: np.ndarray, divider: int, multiplier: int,
                axis: int = 0) -> np.ndarray:
-    result_data = (data_array[min_indexes[0]] * multiplier + data_array[min_indexes[1]]) / divider
+    result_array = result_data = (data_array[min_indexes[0]] * multiplier + data_array[min_indexes[1]]) / divider
+
     for i in enumerate(data_array):
         if i[0] == 0 == min(min_indexes):
             result_array = result_data
@@ -118,16 +146,18 @@ def join_array(data_array: List[np.ndarray], min_indexes: np.ndarray, divider: i
             result_array = np.hstack((result_array, result_data)) if axis else np.vstack((result_array, result_data))
         else:
             result_array = np.hstack((result_array, i[1])) if axis else np.vstack((result_array, i[1]))
+
     return result_array
 
 
 def get_index(data_array: np.ndarray, value: float, comparison_type: int = 0) -> np.ndarray:
-    if comparison_type == 0:
-        result_array = np.int8(np.argwhere(data_array == value))
-    elif comparison_type == 1:
+    if comparison_type == 1:
         result_array = np.int8(np.argwhere(data_array < value))
     elif comparison_type == 2:
         result_array = np.int8(np.argwhere(data_array > value))
+    else:
+        result_array = np.int8(np.argwhere(data_array == value))
+
     return result_array
 
 

@@ -12,7 +12,7 @@ import numpy as np
 import os
 import random
 import array_functions as af
-from itertools import product, permutations
+from itertools import product
 
 from main import RESULT_DATA_PATH as RESULT_DATA_PATH
 from main import AMINO_ACIDS as AMINO_ACIDS
@@ -140,6 +140,10 @@ def get_random_amino_acid_sequence(aa_length: Optional[Union[int, str]] = 1, aa_
 
 def get_jukes_cantor_probabilities(branch_length) -> Tuple[float, float]:
     return (1 / 4) + (3 / 4) * exp((-4 / 3) * branch_length), (1 / 4) - (1 / 4) * exp((-4 / 3) * branch_length)
+
+
+def get_jukes_cantor_probabilities_amino_acids(branch_length) -> Tuple[float, float]:
+    return 1/20 * (1 + 19 * exp(-20 * branch_length)), 1/20 * (1 - exp(-20 * branch_length))
 
 
 def simulate_sequence_jc(branch_length: float, sequence_length: Union[int, str, None] = 1,
@@ -360,7 +364,7 @@ def calculate_pij(state_frequency: Tuple[Optional[float], ...], parameters_p: Tu
         pij.update({f'P<sub>{"".join(map(str, ij))}</sub>(<span class="text-success">{parameter[0]}</span>)':
                     af.get_pij(qmatrix, parameter[1], ij)})
     result = {'execution_time': convert_seconds(time() - start_time)}
-    result.update(*pij)
+    result.update(**pij)
 
     return result
 
@@ -398,10 +402,10 @@ def change_amino_acid(sequence: Union[str, List[str]], sep: str = ' ') -> Union[
     return sep.join(final_sequence) if isinstance(sequence, str) else final_sequence
 
 
-def simulate_amino_acid_replacements_along_tree(lg_text: str, newick_text: str, simulations_count: int = 100000,
-                                                aa_length: int = 10) -> Dict[str, Union[str, float, int]]:
+def simulate_amino_acid_replacements_along_tree(probabilities: Tuple[np.ndarray, ...], newick_text: str,
+                                                simulations_count: int = 100000, aa_length: int = 10
+                                                ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
-    probabilities = af.lq_to_qmatrix(lg_text)
     newick_tree = Tree(newick_text)
     simulations_result = []
     for i in range(simulations_count):
@@ -496,12 +500,11 @@ def get_nodes_starting_values(list_nodes_info: List[Dict[str, Union[float, bool,
 def get_states(node_states: List[Dict[str, Tuple[int, ...]]], node_starting_values: Dict[str, Union[float, bool, str,
                list[float], list[int], Tuple[int, ...], Tuple[float, ...]]], node_info: Dict[str,
                Union[float, bool, str, List[float], Tuple[int, ...]]]) -> Tuple[int, ...]:
-    print(node_starting_values)
     starting_value = node_starting_values.get(node_info.get('node'))
     father_name = node_info.get('father_name')
     father_starting_value = find_dict_in_iterable(node_states, father_name).get(father_name)
-    char_1 = [BINARY.index(BINARY[i]) for i, x in enumerate(father_starting_value) if x > 0][0]
-    char_2 = [BINARY.index(BINARY[i]) for i, x in enumerate(starting_value) if x > 0][0]
+    char_1 = [BINARY.index(BINARY[i]) for i, x in enumerate(father_starting_value) if float(x) > 0][0]
+    char_2 = [BINARY.index(BINARY[i]) for i, x in enumerate(starting_value) if float(x) > 0][0]
 
     return char_1, char_2
 
@@ -559,13 +562,10 @@ def compute_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional
                                                                                                       float, int]]:
     start_time = time()
     simulations_result = dict()
-    # if final_sequence:
     likelihood = __compute_likelihood_with_binary_jc(newick_text, final_sequence)
     simulations_result.update({'formula': likelihood[1]})
     simulations_result.update({'solution': likelihood[2]})
     simulations_result.update({'likelihood_of_the_data': likelihood[0]})
-    # else:
-    #     simulations_result.update({'final_sequence': 'final sequence was entered incorrectly'})
 
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update(simulations_result)
@@ -591,28 +591,42 @@ def get_ancestors_of_leaves_only(newick_tree: Tree, exception_set: Optional[Set]
     return ancestors_list, ancestors_set
 
 
-def get_transition(nodes_vectors: List[Dict[str, Tuple[int, ...]]], node_name: str, nodes_info: List[Dict[str,
-                   Union[float, bool, str, List[float]]]], nodes_transition_states: List[Tuple[int, ...]],
-                   ancestor_name: str, qmatrix: np.ndarray):
-    repeat = 1
-    node_vector = find_dict_in_iterable(nodes_vectors, node_name)
-    node_info = find_dict_in_iterable(nodes_info, 'node', node_name)
-    for node_transition_states in nodes_transition_states:
-        distance = find_dict_in_iterable(nodes_info, 'node', node_name).get('distance')
-        pij = af.get_pij(qmatrix, distance, get_states([{ancestor_name: node_transition_states}], node_vector,
-                                                       node_info))
-        repeat *= pij
+def calculate_felsensteins_likelihood_for_amino_acids(newick_node: Node, leaves_dict: Dict[str, Tuple[int, ...]],
+                                                      alphabet: Tuple[str, ...], probabilities: Tuple[np.ndarray, ...]
+                                                      ) -> Union[Tuple[Union[Tuple[np.ndarray, ...], Tuple[float, ...]],
+                                                                 float], float]:
+    alphabet_size = len(alphabet)
+    if not newick_node.children:
+        return leaves_dict.get(newick_node.name), newick_node.distance_to_father
 
-    return repeat
+    le = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[0], leaves_dict, alphabet, probabilities
+                                                           )
+    ri = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[1], leaves_dict, alphabet, probabilities
+                                                           )
 
+    pl_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(le[1], alphabet_size)
+    pr_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(ri[1], alphabet_size)
 
-# def
+    vector = []
+    for j in range(alphabet_size):
+        l_l = l_r = 0
+        for i in range(alphabet_size):
+            l_l += pl_qmatrix[j][i] * le[0][i]
+            l_r += pr_qmatrix[j][i] * ri[0][i]
+        vector.append(l_l * l_r)
+    vector = tuple(vector)
+
+    if newick_node.father:
+        return vector, newick_node.distance_to_father
+    else:
+        return np.sum([i for i in vector])
 
 
 def calculate_felsensteins_likelihood(newick_node: Node, matrix: np.ndarray, leaves_dict: Dict[str, Tuple[int, int]]
-                                      ) -> Tuple[Union[Tuple[float, int], Tuple[int, float]], Union[float, int]]:
+                                      ) -> Union[Tuple[Union[Tuple[np.ndarray, ...], Tuple[float, ...]], float],
+                                                 np.ndarray]:
     if not newick_node.children:
-        return (leaves_dict.get(newick_node.name), newick_node.distance_to_father)
+        return leaves_dict.get(newick_node.name), newick_node.distance_to_father
 
     le = calculate_felsensteins_likelihood(newick_node.children[0], matrix, leaves_dict)
     ri = calculate_felsensteins_likelihood(newick_node.children[1], matrix, leaves_dict)
@@ -620,16 +634,16 @@ def calculate_felsensteins_likelihood(newick_node: Node, matrix: np.ndarray, lea
     l_0 = ((af.get_pij(matrix, le[1], (0, 0)) * le[0][0] + af.get_pij(matrix, le[1], (0, 1)) * le[0][1]) *
            (af.get_pij(matrix, ri[1], (0, 0)) * ri[0][0] + af.get_pij(matrix, ri[1], (0, 1)) * ri[0][1]))
     l_1 = ((af.get_pij(matrix, le[1], (1, 0)) * le[0][0] + af.get_pij(matrix, le[1], (1, 1)) * le[0][1]) *
-                (af.get_pij(matrix, ri[1], (1, 0)) * ri[0][0] + af.get_pij(matrix, ri[1], (1, 1)) * ri[0][1]))
+           (af.get_pij(matrix, ri[1], (1, 0)) * ri[0][0] + af.get_pij(matrix, ri[1], (1, 1)) * ri[0][1]))
 
     if newick_node.father:
-        return ((l_0, l_1), newick_node.distance_to_father)
+        return (l_0, l_1), newick_node.distance_to_father
     else:
         return 1 / len(BINARY) * l_0 + 1 / len(BINARY) * l_1
 
 
-def __compute_felsensteins_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None) -> Tuple[
-                                                     float, str, str]:
+def __compute_felsensteins_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None
+                                                     ) -> np.ndarray:
     newick_tree = Tree(newick_text)
     alphabet_size = len(BINARY)
 
@@ -648,101 +662,48 @@ def __compute_felsensteins_likelihood_with_binary_jc(newick_text: str, final_seq
     return likelihood
 
 
-def __compute_felsensteins_likelihood_with_binary_jc2(newick_text: str, final_sequence: Optional[str] = None) -> Tuple[
-                                                     float, str, str]:
+def get_amino_acid_replacement_frequencies(amino_acid1: str, amino_acid2: str, replacement_frequencies):
+    return replacement_frequencies[AMINO_ACIDS[0].index(amino_acid1)][AMINO_ACIDS[0].index(amino_acid2)]
+
+
+def __compute_amino_acids_likelihood(probabilities: Tuple[np.ndarray, ...], newick_text: str, final_sequence:
+                                     Optional[str] = None) -> float:
+    alphabet = AMINO_ACIDS[0]
+    # qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
     newick_tree = Tree(newick_text)
-    ancestors_list, ancestors_set = get_ancestors_of_leaves_only(newick_tree)
-    alphabet_size = len(BINARY)
+    alphabet_size = len(alphabet)
 
     leaves_info = newick_tree.get_list_nodes_info(False, True, 'pre-order', {'node_type': ['leaf']})
-    nodes_vectors = get_nodes_starting_values(leaves_info, BINARY, final_sequence)
 
-    frequency = 1 / alphabet_size
-    state_frequency = (frequency, None)
-    qmatrix = af.get_one_parameter_qmatrix(*state_frequency)
-    processed_nodes = set([i.get('node') for i in leaves_info])
-    likelihood, formula, solution = 0, f'', f''
+    sequence_list = final_sequence.split()
+    sequence_dict = dict()
+    for j in range(len(sequence_list) // 2):
+        sequence_dict.update({sequence_list[j + j][1::]: sequence_list[j + j - 1]})
 
-    for ancestor in ancestors_list:
-        ancestor_name = ancestor.get('node')
-        processed_nodes.add(ancestor_name)
-        result, vector = 0, []
-        for i in range(alphabet_size):
-            repeat = 1
-            for child in ancestor.get('children'):
-                leaf_vector = find_dict_in_iterable(nodes_vectors, child)
-                print(f'\n\"leaf_vector\"  \t\t{leaf_vector}')
-                transition = (i, leaf_vector.get(child).index(1))
-                print(f'\"transition\"  \t\t\t{transition}')
-                node_starting_value = [{ancestor_name: (1 - i, 0 + i)}]
-                print(f'\"node_starting_value\"  \t\t\t{node_starting_value}')
-                distance = find_dict_in_iterable(leaves_info, 'node', child).get('distance')
-                print(f'\"distance\"  \t\t\t{distance}')
-                pij = af.get_pij(qmatrix, distance, transition)
-                repeat += pij
-            vector.append(repeat)
-            result *= repeat
-        print(f'\"vector\"  \t\t\t{vector}')
-        node_vector = {ancestor_name: tuple(vector)}
-        nodes_vectors.append(node_vector)
-        print(f'\"nodes_vectors\"  \t\t\t{nodes_vectors}')
-        likelihood += result
-    all_nodes = newick_tree.get_list_nodes_info(False, False, 'level-order')
-    print(f'\n\"all_nodes\"  \t\t{all_nodes}\n')
-    unprocessed_nodes = [*(set(all_nodes) - processed_nodes)]
-    print(f'\n\"unprocessed_nodes\"  \t\t{unprocessed_nodes}\n')
-    nodes_info = newick_tree.get_list_nodes_info(False, True, 'pre-order', {'node_type': ['node', 'root']})
+    len_seq = len(list(sequence_dict.values())[0])
+    likelihood = 1
+    for i_char in range(len_seq):
+        leaves_dict = dict()
+        for i in range(len(leaves_info)):
+            node_name = leaves_info[i].get('node')
+            sequence = sequence_dict.get(node_name)[i_char]
+            frequency = [0] * alphabet_size
+            frequency[alphabet.index(sequence)] = 1
+            leaves_dict.update({node_name: tuple(frequency)})
+        likelihood *= calculate_felsensteins_likelihood_for_amino_acids(newick_tree.root, leaves_dict, alphabet,
+                                                                        probabilities)
+    return likelihood
 
-    while unprocessed_nodes:
-        current_node = find_dict_in_iterable(nodes_info, 'node', unprocessed_nodes.pop())
-        result, vector = 0, []
-        for i in range(alphabet_size):
-            repeat = 1
-            for child in current_node.get('children'):
-                node_vector = find_dict_in_iterable(nodes_vectors, child)
-                print(f'\n\"leaf_vector\"  \t\t{node_vector}')
-                transition = (i, node_vector.get(child).index(1))
-                print(f'\"transition\"  \t\t\t{transition}')
-                node_starting_value = [{child: (1 - i, 0 + i)}]
-                print(f'\"node_starting_value\"  \t\t\t{node_starting_value}')
-                distance = find_dict_in_iterable(nodes_info, 'node', child).get('distance')
-                print(f'\"distance\"  \t\t\t{distance}')
-                pij = af.get_pij(qmatrix, distance, transition)
-                repeat += pij
-            vector.append(repeat)
-            result += repeat
-    print(f'\"vector\"  \t\t\t{vector}')
-    node_vector = {ancestor_name: tuple(vector)}
-    nodes_vectors.append(node_vector)
 
-    print(current_node)
-    # for ancestor_name in unprocessed_nodes:
-    #     ancestor = find_dict_in_iterable(nodes_info, 'node', ancestor_name)
-    #     result, vector = 0, []
-    #     processed_nodes.add(ancestor_name)
+def compute_amino_acids_likelihood(probabilities: Tuple[np.ndarray, ...], newick_text: str, final_sequence:
+                                   Optional[str] = None) -> Dict[str, Union[str, float, int]]:
+    start_time = time()
+    likelihood = __compute_amino_acids_likelihood(probabilities, newick_text, final_sequence)
 
-        # for iterable in cartesian_product:
-    #     repeat, repeat_f1, repeat_f2 = frequency, f'{frequency:.3f}', f'P({iterable[0]})'
-    #     answer = ''.join([BINARY[x] for x in iterable])
-    #     nodes_starting_values = get_nodes_starting_values(nodes_info, BINARY, answer)
-    #     # print(f'\n\"iterable\"  \t\t{iterable}')
-    #     # print(f'\"answer\"  \t\t{answer}')
-    #     # print(f'\"nodes_starting_values\"  \t\t{nodes_starting_values}')
-    #     # for number, node_starting_values in enumerate(nodes_starting_values):
-    #     #     node_info = nodes_info[number]
-    #     #     if find_dict_in_iterable(nodes_info, 'node', node_info.get('father_name')):
-    #     #         repeat, repeat_f1, repeat_f2 = get_node_likelihood(nodes_starting_values, node_starting_values,
-    #     #                                                            node_info, qmatrix, repeat, repeat_f1, repeat_f2)
-    #
-    #     for number, leaf_starting_values in enumerate(leaves_vectors):
-    #         repeat, repeat_f1, repeat_f2 = get_node_likelihood(nodes_starting_values, leaf_starting_values,
-    #                                                            leaves_info[number], qmatrix, repeat, repeat_f1,
-    #                                                            repeat_f2)
+    result = {'execution_time': convert_seconds(time() - start_time)}
+    result.update({'likelihood_of_the_data': likelihood})
 
-        # solution = f'{solution}<br>&emsp;&emsp;&emsp;&emsp;&nbsp; + {result_f2}' if solution else f'{result_f2}'
-        # formula = f'{formula}<br>&emsp;&emsp;&emsp;&emsp;&nbsp; + {result_f2}' if formula else f'{result_f2}'
-
-    return likelihood, formula, solution
+    return result
 
 
 def compute_felsensteins_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None) -> Dict[
@@ -756,8 +717,8 @@ def compute_felsensteins_likelihood_with_binary_jc(newick_text: str, final_seque
     return result
 
 
-def simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, ...], branch_length:
-                                           float, simulations_count: int = 100000, aa_length: int = 10,
+def simulate_amino_acid_replacements_by_lg(probabilities: Tuple[np.ndarray, ...], branch_length: float,
+                                           simulations_count: int = 100000, aa_length: int = 10,
                                            starting_amino_acid: Optional[Union[str, int]] = None
                                            ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
@@ -783,6 +744,7 @@ def calculate_change_dna_length_statistics(repetition_count: int, low: int, dna_
                                            events_count: int = 4) -> Dict[str, Union[str, float, int]]:
     start_time = time()
     event_list = []
+    event_result = ('', 0, 0, 0, 0, 0)
     for _ in range(repetition_count):
         dna = get_random_sequence(dna_length)
         for i in range(events_count):

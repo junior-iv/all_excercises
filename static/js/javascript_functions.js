@@ -1,32 +1,3 @@
-// document.getElementById('textName').onkeypress = function(e) {
-//   if (e.keyCode === 13) {
-//     document.getElementById('checkButton').click();
-//   }
-// };
-//
-// document.getElementById('nodeName').onkeypress = function(e) {
-//   if (e.keyCode === 13) {
-//     document.getElementById('findButton').click();
-//   }
-// };
-//
-// document.getElementById('distanceToFather').onkeypress = function(e) {
-//   if (e.keyCode === 13) {
-//     document.getElementById('theButton').click();
-//   }
-// };
-// if (document.querySelector('#carousel')) {
-// document.addEventListener('DOMContentLoaded', function () {
-//     let elems = document.querySelector('.carousel');
-//     let instances = M.Carousel.init(elems, {
-//         duration: 1000,
-//         dist: -50,
-//         shift: 20,
-//         numVisible: 3,
-//         fullWidth: true
-//     });
-// });
-// }
 
 if (document.querySelector('#glCoefficient')) {
     getOneParameterQMatrix();
@@ -40,7 +11,7 @@ document.getElementById('newickForm').addEventListener('submit', function (e) {
 function printTree(status) {
     const newickText = document.getElementById('textArea');
     const formData = new FormData();
-    formData.append('newickText', newickText.value);
+    formData.append('newickText', newickText.value.trim());
     formData.append('status', status);
 
     fetch('/print_tree', {
@@ -53,7 +24,6 @@ function printTree(status) {
         })
         .catch(error => {
             console.error('Error:', error);
-            // showMessage(3, error.message)
         });
 }
 
@@ -61,7 +31,7 @@ function changeTree() {
     const newickText = document.getElementById('textArea');
     const distanceToFather = document.getElementById('distanceToFather');
     const formData = new FormData();
-    formData.append('newickText', newickText.value);
+    formData.append('newickText', newickText.value.trim());
     formData.append('distanceToFather', distanceToFather.value);
 
     if (distanceToFather.value === '') { return }
@@ -81,10 +51,10 @@ function changeTree() {
         });
 }
 
-function uploadFile() {
+function uploadFile(suffix = '') {
     const flexSwitchProcessFileOnServer = document.getElementById('flexSwitchProcessFileOnServer')
-    let newickFile = document.getElementById('newickFile').files[0];
-    let textArea = document.getElementById('textArea');
+    let newickFile = document.getElementById('newickFile' + suffix).files[0];
+    let textArea = document.getElementById('textArea' + suffix);
     if (flexSwitchProcessFileOnServer.checked) {
         const formData = new FormData();
         formData.append('newickFile', newickFile);
@@ -95,7 +65,7 @@ function uploadFile() {
         })
             .then(response => response.json())
             .then(data => {
-                textArea.value = data.message;
+                textArea.value = data.message.trim();
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -108,7 +78,7 @@ function uploadFile() {
             let reader = new FileReader();
 
             reader.onload = function(event) {
-                textArea.value = event.target.result;
+                textArea.value = event.target.result.trim();
             };
             reader.readAsText(file);
         }
@@ -127,7 +97,7 @@ function findNode() {
     const nodeName = document.getElementById('nodeName');
     const flexSwitchSelectFound = document.getElementById('flexSwitchSelectFound');
     const formData = new FormData();
-    formData.append('newickText', newickText.value);
+    formData.append('newickText', newickText.value.trim());
     formData.append('nodeName', nodeName.value);
 
     fetch('/find_node', {
@@ -189,8 +159,8 @@ function getRobinsonFouldsDistance() {
     const newickText1 = document.getElementById('newickText1');
     const newickText2 = document.getElementById('newickText2');
     const formData = new FormData();
-    formData.append('newickText1', newickText1.value);
-    formData.append('newickText2', newickText2.value);
+    formData.append('newickText1', newickText1.value.trim());
+    formData.append('newickText2', newickText2.value.trim());
 
     fetch('/get_robinson_foulds_distance', {
         method: 'POST',
@@ -230,7 +200,7 @@ function getOneParameterQMatrix() {
 function lgToQMatrix() {
     const textArea = document.getElementById('textArea');
     const formData = new FormData();
-    formData.append('textArea', textArea.value);
+    formData.append('textArea', textArea.value.trim());
 
     fetch('/lq_to_qmatrix', {
         method: 'POST',
@@ -313,9 +283,9 @@ function simulateAminoAcidReplacementsAlongTree() {
     const newickText = document.getElementById('newickText');
     const simulationsCount = document.getElementById('simulationsCount');
     const formData = new FormData();
-    formData.append('textArea', textArea.value);
+    formData.append('textArea', textArea.value.trim());
     formData.append('aaLength', aaLength.value);
-    formData.append('newickText', newickText.value);
+    formData.append('newickText', newickText.value.trim());
     formData.append('simulationsCount', simulationsCount.value);
 
     const loaderID = getLoader();
@@ -344,7 +314,7 @@ function simulateAminoAcidReplacementsByLG() {
     const branchLength = document.getElementById('branchLength');
     const simulationsCount = document.getElementById('simulationsCount');
     const formData = new FormData();
-    formData.append('textArea', textArea.value);
+    formData.append('textArea', textArea.value.trim());
     formData.append('aaLength', aaLength.value);
     formData.append('aminoAcid', aminoAcid.value);
     formData.append('branchLength', branchLength.value);
@@ -373,8 +343,8 @@ function simulateWithBinaryJC(variant = 1) {
     const finalSequence = document.getElementById('finalSequence');
     const simulationsCount = document.getElementById('simulationsCount');
     const formData = new FormData();
-    formData.append('textArea', textArea.value);
-    formData.append('finalSequence', finalSequence.value);
+    formData.append('textArea', textArea.value.trim());
+    formData.append('finalSequence', finalSequence.value.trim());
     formData.append('simulationsCount', simulationsCount.value);
     formData.append('variant', variant);
 
@@ -401,8 +371,8 @@ function computeFelsensteinsLikelihood() {
     const textArea = document.getElementById('textArea');
     const finalSequence = document.getElementById('finalSequence');
     const formData = new FormData();
-    formData.append('textArea', textArea.value);
-    formData.append('finalSequence', finalSequence.value);
+    formData.append('textArea', textArea.value.trim());
+    formData.append('finalSequence', finalSequence.value.trim());
 
     const loaderID = getLoader();
     setVisibilityLoader(true, loaderID);
@@ -423,12 +393,40 @@ function computeFelsensteinsLikelihood() {
         });
 }
 
+function computeAminoAcidsLikelihood() {
+    const textArea = document.getElementById('textArea');
+    const newickText = document.getElementById('newickText');
+    const finalSequence = document.getElementById('finalSequence');
+    const formData = new FormData();
+    formData.append('textArea', textArea.value.trim());
+    formData.append('newickText', newickText.value.trim());
+    formData.append('finalSequence', finalSequence.value.trim());
+
+    const loaderID = getLoader();
+    setVisibilityLoader(true, loaderID);
+
+    fetch('/compute_amino_acids_likelihood', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            setVisibilityLoader(false, loaderID);
+            showMessage(1, data.message)
+        })
+        .catch(error => {
+            setVisibilityLoader(false, loaderID);
+            console.error('Error:', error);
+            showMessage(3, error.message)
+        });
+}
+
 function computeLikelihoodWithBinaryJC() {
     const textArea = document.getElementById('textArea');
     const finalSequence = document.getElementById('finalSequence');
     const formData = new FormData();
-    formData.append('textArea', textArea.value);
-    formData.append('finalSequence', finalSequence.value);
+    formData.append('textArea', textArea.value.trim());
+    formData.append('finalSequence', finalSequence.value.trim());
 
     const loaderID = getLoader();
     setVisibilityLoader(true, loaderID);
