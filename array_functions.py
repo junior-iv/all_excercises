@@ -78,25 +78,6 @@ def get_one_parameter_qmatrix(p0: Optional[float], p1: Optional[float]) -> np.nd
     return qmatrix
 
 
-def get_twenty_parameter_qmatrix(p0: Optional[float], p1: Optional[float]) -> np.ndarray:
-    qmatrix = np.zeros((20, 20), dtype='float32')
-    p1 = p1 if p1 else 1 - p0
-    # np.tri(20,20, k=1)
-    #
-    for i in range(20):
-        for j in range(20):
-            if i < j:
-                qmatrix[i, j] = 1 / (20 * (1 - p1))
-            elif i > j:
-                qmatrix[i, j] = 1 / (2 * p1)
-    # qmatrix[0, 0] = - 1 / (2 * (1 - p1))
-    # qmatrix[0, 1] = 1 / (2 * (1 - p1))
-    # qmatrix[1, 0] = 1 / (2 * p1)
-    # qmatrix[1, 1] = - 1 / (2 * p1)
-
-    return qmatrix
-
-
 def lq_to_qmatrix(lg: str) -> Tuple[np.ndarray, ...]:
     qmatrix = np.zeros((20, 20), dtype='float32')
     lg_list = lg.split('\n')
