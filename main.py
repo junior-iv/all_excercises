@@ -589,7 +589,7 @@ def compute_amino_acids_likelihood():
             elif not Tree(newick_text).check_tree_for_binary():
                 result = ERRORS.get('incorrect_tree')
             else:
-                statistics = sf.compute_amino_acids_likelihood(qmatrix, newick_text, final_sequence)
+                statistics = sf.compute_amino_acids_likelihood(newick_text, final_sequence)
                 result = df.result_design(statistics)
 
         return jsonify(message=result)

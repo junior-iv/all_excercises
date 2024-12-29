@@ -592,17 +592,15 @@ def get_ancestors_of_leaves_only(newick_tree: Tree, exception_set: Optional[Set]
 
 
 def calculate_felsensteins_likelihood_for_amino_acids(newick_node: Node, leaves_dict: Dict[str, Tuple[int, ...]],
-                                                      alphabet: Tuple[str, ...], probabilities: Tuple[np.ndarray, ...]
-                                                      ) -> Union[Tuple[Union[Tuple[np.ndarray, ...], Tuple[float, ...]],
-                                                                 float], float]:
+                                                      alphabet: Tuple[str, ...]) -> Union[Tuple[Union[Tuple[np.ndarray,
+                                                                                          ...], Tuple[float, ...]],
+                                                                                          float], float]:
     alphabet_size = len(alphabet)
     if not newick_node.children:
         return leaves_dict.get(newick_node.name), newick_node.distance_to_father
 
-    le = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[0], leaves_dict, alphabet, probabilities
-                                                           )
-    ri = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[1], leaves_dict, alphabet, probabilities
-                                                           )
+    le = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[0], leaves_dict, alphabet)
+    ri = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[1], leaves_dict, alphabet)
 
     pl_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(le[1], alphabet_size)
     pr_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(ri[1], alphabet_size)
@@ -611,15 +609,16 @@ def calculate_felsensteins_likelihood_for_amino_acids(newick_node: Node, leaves_
     for j in range(alphabet_size):
         l_l = l_r = 0
         for i in range(alphabet_size):
-            l_l += pl_qmatrix[j][i] * le[0][i]
-            l_r += pr_qmatrix[j][i] * ri[0][i]
+            l_l += pl_qmatrix[j, i] * le[0][i]
+            l_r += pr_qmatrix[i, j] * ri[0][i]
         vector.append(l_l * l_r)
     vector = tuple(vector)
 
     if newick_node.father:
         return vector, newick_node.distance_to_father
     else:
-        return np.sum([i for i in vector])
+        # print(f'np.sum([i / alphabet_size for i in vector]): {np.sum([i / alphabet_size for i in vector])}')
+        return np.sum([i / alphabet_size for i in vector])
 
 
 def calculate_felsensteins_likelihood(newick_node: Node, matrix: np.ndarray, leaves_dict: Dict[str, Tuple[int, int]]
@@ -666,7 +665,7 @@ def get_amino_acid_replacement_frequencies(amino_acid1: str, amino_acid2: str, r
     return replacement_frequencies[AMINO_ACIDS[0].index(amino_acid1)][AMINO_ACIDS[0].index(amino_acid2)]
 
 
-def __compute_amino_acids_likelihood(probabilities: Tuple[np.ndarray, ...], newick_text: str, final_sequence:
+def __compute_amino_acids_likelihood(newick_text: str, final_sequence:
                                      Optional[str] = None) -> float:
     alphabet = AMINO_ACIDS[0]
     # qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
@@ -690,15 +689,14 @@ def __compute_amino_acids_likelihood(probabilities: Tuple[np.ndarray, ...], newi
             frequency = [0] * alphabet_size
             frequency[alphabet.index(sequence)] = 1
             leaves_dict.update({node_name: tuple(frequency)})
-        likelihood *= calculate_felsensteins_likelihood_for_amino_acids(newick_tree.root, leaves_dict, alphabet,
-                                                                        probabilities)
+        likelihood *= calculate_felsensteins_likelihood_for_amino_acids(newick_tree.root, leaves_dict, alphabet,)
     return likelihood
 
 
-def compute_amino_acids_likelihood(probabilities: Tuple[np.ndarray, ...], newick_text: str, final_sequence:
-                                   Optional[str] = None) -> Dict[str, Union[str, float, int]]:
+def compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[str] = None) -> Dict[str, Union[str,
+                                                                                                   float, int]]:
     start_time = time()
-    likelihood = __compute_amino_acids_likelihood(probabilities, newick_text, final_sequence)
+    likelihood = __compute_amino_acids_likelihood(newick_text, final_sequence)
 
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update({'likelihood_of_the_data': likelihood})
