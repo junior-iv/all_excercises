@@ -617,8 +617,7 @@ def calculate_felsensteins_likelihood_for_amino_acids(newick_node: Node, leaves_
     if newick_node.father:
         return vector, newick_node.distance_to_father
     else:
-        # print(f'np.sum([i / alphabet_size for i in vector]): {np.sum([i / alphabet_size for i in vector])}')
-        return np.sum([i / alphabet_size for i in vector])
+        return np.sum([1 / alphabet_size * i for i in vector])
 
 
 def calculate_felsensteins_likelihood(newick_node: Node, matrix: np.ndarray, leaves_dict: Dict[str, Tuple[int, int]]
@@ -668,6 +667,7 @@ def get_amino_acid_replacement_frequencies(amino_acid1: str, amino_acid2: str, r
 def __compute_amino_acids_likelihood(newick_text: str, final_sequence:
                                      Optional[str] = None) -> float:
     alphabet = AMINO_ACIDS[0]
+    # alphabet = ['0', '1', '2']
     # qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
     newick_tree = Tree(newick_text)
     alphabet_size = len(alphabet)
@@ -689,7 +689,7 @@ def __compute_amino_acids_likelihood(newick_text: str, final_sequence:
             frequency = [0] * alphabet_size
             frequency[alphabet.index(sequence)] = 1
             leaves_dict.update({node_name: tuple(frequency)})
-        likelihood *= calculate_felsensteins_likelihood_for_amino_acids(newick_tree.root, leaves_dict, alphabet,)
+        likelihood *= calculate_felsensteins_likelihood_for_amino_acids(newick_tree.root, leaves_dict, alphabet)
     return likelihood
 
 
