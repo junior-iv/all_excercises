@@ -571,6 +571,7 @@ def simulate_with_binary_jc():
 def compute_amino_acids_likelihood():
     if request.method == 'POST':
         lg_text = request.form.get('textArea')
+        alphabet_number = int(request.form.get('alphabetNumber'))
         newick_text = request.form.get('newickText')
         final_sequence = request.form.get('finalSequence')
 
@@ -589,7 +590,7 @@ def compute_amino_acids_likelihood():
             elif not Tree(newick_text).check_tree_for_binary():
                 result = ERRORS.get('incorrect_tree')
             else:
-                statistics = sf.compute_amino_acids_likelihood(newick_text, final_sequence)
+                statistics = sf.compute_amino_acids_likelihood(newick_text, final_sequence, alphabet_number)
                 result = df.result_design(statistics)
 
         return jsonify(message=result)

@@ -143,7 +143,7 @@ def get_jukes_cantor_probabilities(branch_length) -> Tuple[float, float]:
 
 
 def get_jukes_cantor_probabilities_amino_acids(branch_length) -> Tuple[float, float]:
-    return 1/20 * (1 + 19 * exp(-20 * branch_length)), 1/20 * (1 - exp(-20 * branch_length))
+    return 1/20 + 19 / 20 * exp(-20 / 19 * branch_length), 1 / 20 - 1 / 20 * exp(-20 / 19 * branch_length)
 
 
 def simulate_sequence_jc(branch_length: float, sequence_length: Union[int, str, None] = 1,
@@ -664,10 +664,9 @@ def get_amino_acid_replacement_frequencies(amino_acid1: str, amino_acid2: str, r
     return replacement_frequencies[AMINO_ACIDS[0].index(amino_acid1)][AMINO_ACIDS[0].index(amino_acid2)]
 
 
-def __compute_amino_acids_likelihood(newick_text: str, final_sequence:
-                                     Optional[str] = None) -> Tuple[float, ...]:
-    alphabet = AMINO_ACIDS[0]
-    # alphabet = tuple(['0', '1', '2'])
+def __compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[str] = None, alphabet_number: int = 2
+                                     ) -> Tuple[float, ...]:
+    alphabet = CHARACTERS[alphabet_number]
     # qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
     newick_tree = Tree(newick_text)
     alphabet_size = len(alphabet)
@@ -697,10 +696,10 @@ def __compute_amino_acids_likelihood(newick_text: str, final_sequence:
     return likelihood, log_likelihood
 
 
-def compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[str] = None) -> Dict[str, Union[str,
-                                                                                                   float, int]]:
+def compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[str] = None, alphabet_number: int = 1
+                                   ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
-    likelihood, log_likelihood = __compute_amino_acids_likelihood(newick_text, final_sequence)
+    likelihood, log_likelihood = __compute_amino_acids_likelihood(newick_text, final_sequence, alphabet_number)
 
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update({'likelihood_of_the_tree': likelihood})
