@@ -394,12 +394,12 @@ function computeFelsensteinsLikelihood() {
 }
 
 function computeAminoAcidsLikelihood() {
-    const textArea = document.getElementById('textArea');
+    // const textArea = document.getElementById('textArea');
     const alphabetNumber = document.getElementById('alphabetNumber');
     const newickText = document.getElementById('newickText');
     const finalSequence = document.getElementById('finalSequence');
     const formData = new FormData();
-    formData.append('textArea', textArea.value.trim());
+    // formData.append('textArea', textArea.value.trim());
     formData.append('alphabetNumber', alphabetNumber.value);
     formData.append('newickText', newickText.value.trim());
     formData.append('finalSequence', finalSequence.value.trim());

@@ -570,28 +570,28 @@ def simulate_with_binary_jc():
 @app.route('/compute_amino_acids_likelihood', methods=['POST'])
 def compute_amino_acids_likelihood():
     if request.method == 'POST':
-        lg_text = request.form.get('textArea')
+        # lg_text = request.form.get('textArea')
         alphabet_number = int(request.form.get('alphabetNumber'))
         newick_text = request.form.get('newickText')
         final_sequence = request.form.get('finalSequence')
 
-        try:
-            qmatrix = af.lq_to_qmatrix(f' \n{lg_text.strip()}')
-        except ValueError:
-            result = ERRORS.get('incorrect_lg_matrix')
-        except IndexError:
-            result = ERRORS.get('incorrect_lg_matrix')
+        # try:
+        #     qmatrix = af.lq_to_qmatrix(f' \n{lg_text.strip()}')
+        # except ValueError:
+        #     result = ERRORS.get('incorrect_lg_matrix')
+        # except IndexError:
+        #     result = ERRORS.get('incorrect_lg_matrix')
+        # else:
+        if not Tree.check_newick(newick_text):
+            result = ERRORS.get('incorrect_newick')
+        elif (Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence.split('\n')) / 2 !=
+              final_sequence.count('>')):
+            result = ERRORS.get('incorrect_sequence')
+        elif not Tree(newick_text).check_tree_for_binary():
+            result = ERRORS.get('incorrect_tree')
         else:
-            if not Tree.check_newick(newick_text):
-                result = ERRORS.get('incorrect_newick')
-            elif (Tree(newick_text).get_node_count({'node_type': ['leaf']}) != len(final_sequence.split('\n')) / 2 !=
-                  final_sequence.count('>')):
-                result = ERRORS.get('incorrect_sequence')
-            elif not Tree(newick_text).check_tree_for_binary():
-                result = ERRORS.get('incorrect_tree')
-            else:
-                statistics = sf.compute_amino_acids_likelihood(newick_text, final_sequence, alphabet_number)
-                result = df.result_design(statistics)
+            statistics = sf.compute_amino_acids_likelihood(newick_text, final_sequence, alphabet_number)
+            result = df.result_design(statistics)
 
         return jsonify(message=result)
 

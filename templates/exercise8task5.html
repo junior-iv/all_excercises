@@ -21,7 +21,7 @@
 {{ super() }}
 <div class="gap-2 d-flex flex-row justify-content-start h-50 w-100 text-center">
     <div class="container gap-2 d-flex flex-column h-75 w-50 mx-3">
-        {{nwt.newick_tool(content_textarea[2], 'Le and Gascuel matrix', '.txt', 8)}}
+<!--        {{nwt.newick_tool(content_textarea[2], 'Le and Gascuel matrix', '.txt', 8)}}-->
         <label for="finalSequence">please provide a sequence into a text field</label>
         <textarea spellcheck="false" id="finalSequence" name="finalSequence" autocomplete="on" rows="8" class="form-control btn-light"
                   placeholder="please provide a final sequence to discover out its probability">{{sequence}}</textarea>

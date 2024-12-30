@@ -609,7 +609,7 @@ def calculate_felsensteins_likelihood_for_amino_acids(newick_node: Node, leaves_
     for j in range(alphabet_size):
         l_l = l_r = 0
         for i in range(alphabet_size):
-            l_l += pl_qmatrix[j, i] * le[0][i]
+            l_l += pl_qmatrix[i, j] * le[0][i]
             l_r += pr_qmatrix[i, j] * ri[0][i]
         vector.append(l_l * l_r)
     vector = tuple(vector)
@@ -665,7 +665,7 @@ def get_amino_acid_replacement_frequencies(amino_acid1: str, amino_acid2: str, r
 
 
 def __compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[str] = None, alphabet_number: int = 2
-                                     ) -> Tuple[float, ...]:
+                                     ) -> Tuple[List[float], float, float]:
     alphabet = CHARACTERS[alphabet_number]
     # qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
     newick_tree = Tree(newick_text)
@@ -681,7 +681,16 @@ def __compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[
     len_seq = len(list(sequence_dict.values())[0])
     likelihood = 1
     log_likelihood = 0
+    log_likelihood_list = []
     for i_char in range(len_seq):
+        # leaves_dict = dict()
+        # for i in range(len(leaves_info)):
+        #     node_name = leaves_info[i].get('node')
+        #     sequence = sequence_dict.get(node_name)[i_char]
+        #     leaves_dict.update({leaves_info[i].get('node'): (1 - BINARY.index(sequence), 0 +
+        #                                                      BINARY.index(sequence))})
+        # qmatrix = af.get_one_parameter_qmatrix(0.5, None)
+        # char_likelihood = calculate_felsensteins_likelihood(newick_tree.root, qmatrix, leaves_dict)
         leaves_dict = dict()
         for i in range(len(leaves_info)):
             node_name = leaves_info[i].get('node')
@@ -692,18 +701,21 @@ def __compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[
         char_likelihood = calculate_felsensteins_likelihood_for_amino_acids(newick_tree.root, leaves_dict, alphabet)
         likelihood *= char_likelihood
         log_likelihood += log(char_likelihood)
+        log_likelihood_list.append(log(char_likelihood))
 
-    return likelihood, log_likelihood
+    return log_likelihood_list, log_likelihood, likelihood
 
 
 def compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[str] = None, alphabet_number: int = 1
                                    ) -> Dict[str, Union[str, float, int]]:
     start_time = time()
-    likelihood, log_likelihood = __compute_amino_acids_likelihood(newick_text, final_sequence, alphabet_number)
+    log_likelihood_list, log_likelihood, likelihood = __compute_amino_acids_likelihood(newick_text, final_sequence,
+                                                                                       alphabet_number)
 
     result = {'execution_time': convert_seconds(time() - start_time)}
     result.update({'likelihood_of_the_tree': likelihood})
     result.update({'log_likelihood_of_the_tree': log_likelihood})
+    result.update({'log_likelihood_list': log_likelihood_list})
 
     return result
 
