@@ -607,11 +607,11 @@ def calculate_felsensteins_likelihood_for_amino_acids(newick_node: Node, leaves_
 
     vector = []
     for j in range(alphabet_size):
-        l_l = l_r = 0
+        freq_l = freq_r = 0
         for i in range(alphabet_size):
-            l_l += pl_qmatrix[i, j] * l_vect[i]
-            l_r += pr_qmatrix[i, j] * r_vect[i]
-        vector.append(l_l * l_r)
+            freq_l += pl_qmatrix[i, j] * l_vect[i]
+            freq_r += pr_qmatrix[i, j] * r_vect[i]
+        vector.append(freq_l * freq_r)
     vector = tuple(vector)
 
     if newick_node.father:
