@@ -599,18 +599,18 @@ def calculate_felsensteins_likelihood_for_amino_acids(newick_node: Node, leaves_
     if not newick_node.children:
         return leaves_dict.get(newick_node.name), newick_node.distance_to_father
 
-    le = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[0], leaves_dict, alphabet)
-    ri = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[1], leaves_dict, alphabet)
+    l_vect, l_dist = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[0], leaves_dict, alphabet)
+    r_vect, r_dist = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[1], leaves_dict, alphabet)
 
-    pl_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(le[1], alphabet_size)
-    pr_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(ri[1], alphabet_size)
+    pl_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(l_dist, alphabet_size)
+    pr_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(r_dist, alphabet_size)
 
     vector = []
     for j in range(alphabet_size):
         l_l = l_r = 0
         for i in range(alphabet_size):
-            l_l += pl_qmatrix[i, j] * le[0][i]
-            l_r += pr_qmatrix[i, j] * ri[0][i]
+            l_l += pl_qmatrix[i, j] * l_vect[i]
+            l_r += pr_qmatrix[i, j] * r_vect[i]
         vector.append(l_l * l_r)
     vector = tuple(vector)
 
@@ -626,18 +626,18 @@ def calculate_felsensteins_likelihood(newick_node: Node, matrix: np.ndarray, lea
     if not newick_node.children:
         return leaves_dict.get(newick_node.name), newick_node.distance_to_father
 
-    le = calculate_felsensteins_likelihood(newick_node.children[0], matrix, leaves_dict)
-    ri = calculate_felsensteins_likelihood(newick_node.children[1], matrix, leaves_dict)
+    l_vect, l_dist = calculate_felsensteins_likelihood(newick_node.children[0], matrix, leaves_dict)
+    r_vect, r_dist = calculate_felsensteins_likelihood(newick_node.children[1], matrix, leaves_dict)
 
-    l_0 = ((af.get_pij(matrix, le[1], (0, 0)) * le[0][0] + af.get_pij(matrix, le[1], (0, 1)) * le[0][1]) *
-           (af.get_pij(matrix, ri[1], (0, 0)) * ri[0][0] + af.get_pij(matrix, ri[1], (0, 1)) * ri[0][1]))
-    l_1 = ((af.get_pij(matrix, le[1], (1, 0)) * le[0][0] + af.get_pij(matrix, le[1], (1, 1)) * le[0][1]) *
-           (af.get_pij(matrix, ri[1], (1, 0)) * ri[0][0] + af.get_pij(matrix, ri[1], (1, 1)) * ri[0][1]))
+    freq_0 = ((af.get_pij(matrix, l_dist, (0, 0)) * l_vect[0] + af.get_pij(matrix, l_dist, (0, 1)) * l_vect[1]) *
+              (af.get_pij(matrix, r_dist, (0, 0)) * r_vect[0] + af.get_pij(matrix, r_dist, (0, 1)) * r_vect[1]))
+    freq_1 = ((af.get_pij(matrix, l_dist, (1, 0)) * l_vect[0] + af.get_pij(matrix, l_dist, (1, 1)) * l_vect[1]) *
+              (af.get_pij(matrix, r_dist, (1, 0)) * r_vect[0] + af.get_pij(matrix, r_dist, (1, 1)) * r_vect[1]))
 
     if newick_node.father:
-        return (l_0, l_1), newick_node.distance_to_father
+        return (freq_0, freq_1), newick_node.distance_to_father
     else:
-        return 1 / len(BINARY) * l_0 + 1 / len(BINARY) * l_1
+        return 1 / len(BINARY) * freq_0 + 1 / len(BINARY) * freq_1
 
 
 def __compute_felsensteins_likelihood_with_binary_jc(newick_text: str, final_sequence: Optional[str] = None
