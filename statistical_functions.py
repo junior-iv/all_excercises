@@ -602,15 +602,15 @@ def calculate_felsensteins_likelihood_for_amino_acids(newick_node: Node, leaves_
     l_vect, l_dist = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[0], leaves_dict, alphabet)
     r_vect, r_dist = calculate_felsensteins_likelihood_for_amino_acids(newick_node.children[1], leaves_dict, alphabet)
 
-    pl_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(l_dist, alphabet_size)
-    pr_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(r_dist, alphabet_size)
+    l_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(l_dist, alphabet_size)
+    r_qmatrix = af.get_jukes_cantor_probabilities_amino_acids_matrix(r_dist, alphabet_size)
 
     vector = []
     for j in range(alphabet_size):
         freq_l = freq_r = 0
         for i in range(alphabet_size):
-            freq_l += pl_qmatrix[i, j] * l_vect[i]
-            freq_r += pr_qmatrix[i, j] * r_vect[i]
+            freq_l += l_qmatrix[i, j] * l_vect[i]
+            freq_r += r_qmatrix[i, j] * r_vect[i]
         vector.append(freq_l * freq_r)
     vector = tuple(vector)
 
