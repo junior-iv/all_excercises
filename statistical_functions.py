@@ -667,6 +667,7 @@ def get_amino_acid_replacement_frequencies(amino_acid1: str, amino_acid2: str, r
 def __compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[str] = None, alphabet_number: int = 2
                                      ) -> Tuple[List[float], float, float]:
     alphabet = CHARACTERS[alphabet_number]
+    # alphabet = tuple(['0', '1', '2'])
     # qmatrix_nn, qmatrix, amino_acids_frequencies, replacement_frequencies = probabilities
     newick_tree = Tree(newick_text)
     alphabet_size = len(alphabet)
@@ -676,7 +677,7 @@ def __compute_amino_acids_likelihood(newick_text: str, final_sequence: Optional[
     sequence_list = final_sequence.split()
     sequence_dict = dict()
     for j in range(len(sequence_list) // 2):
-        sequence_dict.update({sequence_list[j + j][1::]: sequence_list[j + j - 1]})
+        sequence_dict.update({sequence_list[j + j][1::]: sequence_list[j + j + 1]})
 
     len_seq = len(list(sequence_dict.values())[0])
     likelihood = 1
